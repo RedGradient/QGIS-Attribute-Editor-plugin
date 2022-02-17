@@ -44,30 +44,39 @@ class PointTool(QgsMapTool):
         QgsMapTool.__init__(self, canvas)
 
     def canvasReleaseEvent(self, event):
-        # x = event.pos().x() # y = event.pos().y() # print(event.mapPoint())
-        # point = QgsGeometry.fromPointXY(QgsPointXY(float(x), float(y))) # point = event.mapPoint()
-        # selected_feature = self.layer.selectedFeatures() # print(selected_feature) # layer.removeSelection()
-
-
+        # определяем координаты клика
         point = QgsGeometry.fromPointXY(event.mapPoint())
         
+        # получаем активный слой
         layer = self.iface.activeLayer()
         
-        features = layer.getFeatures()
-        for feature in features:
+        # список объектов в выделении
+        selected_features = []
+
+        # проходимся по объектам слоя, чтобы найти тот объект, который был нажат
+        layer_features = layer.getFeatures()
+        for feature in layer_features:
             feature_geometry = feature.geometry()
+
             if point.intersects(feature_geometry):
-                self.display_attrs(feature)
-                layer.select(feature.id())
-            else:
-                # TODO: очистить таблицу
-                layer.removeSelection()
+                layer.select(feature.id())          # выделяем объект на карте
+                selected_features.append(feature)   # и помещаем в список
+
+
+        if len(selected_features) != 0:
+            # отображаем объект(ы) в таблице
+            self.display_attrs(selected_features)
+        else:
+            self.parent.attributeTable.setRowCount(0)
+            layer.removeSelection()
+        
+        
+        # TODO: очистить таблицу
+        # self.parent.attributeTable.setRowCount(0)
         
 
-        
-
-    def display_attrs(self, selected_feature):
-        """Get selected feature's attributes"""
+    def display_attrs(self, features):
+        """Принимает список объектов и отображает их атрибуты"""
 
         # устанавливаем количество столбцов
         self.parent.attributeTable.setColumnCount(2)
@@ -78,27 +87,20 @@ class PointTool(QgsMapTool):
         # --- задаем ширину столбцов в соответствии с шириной виджета таблицы
         # self.parent.attributeTable.horizontalHeader().setSectionResizeMode(QHeaderView. ... ) Stretch, Interactive, ResizeToContents
 
-        # получаем атрибуты выделенного объекта
-        
-        self.layer = self.iface.activeLayer()
-        # print("Активный слой:", self.layer)
+        table_row_count = 0
+        for i, feature in enumerate(features):
+            # создаем словарь с названиями и значениями атрибутов
+            feature_attr_map = features[i].attributeMap()
 
+            table_row_count += len(feature_attr_map)
 
-        # selected_feature = self.layer.selectedFeatures()
-        # if len(selected_feature) > 0:
-        #     selected_feature_attr_map = selected_feature[0].attributeMap() # уточнить поведение когда выделено множество объектов (пока показывается первый в списке)
-        # else:
-        #     selected_feature_attr_map = {}
-        
-        selected_feature_attr_map = selected_feature.attributeMap()
+            # устанавливаем кол-во строк в таблице
+            self.parent.attributeTable.setRowCount(table_row_count)
 
-        # устанавливаем кол-во строк в таблице = кол-во атрибутов у объекта
-        self.parent.attributeTable.setRowCount(len(selected_feature_attr_map))
-
-        # заполняем таблицу
-        for i, item in enumerate(selected_feature_attr_map.items()):
-            self.parent.attributeTable.setItem(i, 0, QTableWidgetItem(item[0]))
-            self.parent.attributeTable.setItem(i, 1, QTableWidgetItem(item[1]))
+            # заполняем таблицу
+            for j, item in enumerate(feature_attr_map.items()):
+                self.parent.attributeTable.setItem(table_row_count + j, 0, QTableWidgetItem(item[0]))
+                self.parent.attributeTable.setItem(table_row_count + j, 1, QTableWidgetItem(item[1]))
         
         # подгоняем ширину столбцов под их содержимое
         self.parent.attributeTable.resizeColumnsToContents()
