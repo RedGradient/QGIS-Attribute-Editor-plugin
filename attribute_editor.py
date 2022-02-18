@@ -41,17 +41,41 @@ class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas):
         self.parent = parent
         self.iface = iface
+
+        # список объектов в выделении
+        self.selected_features = []
+
+        self.ctrl_pressed = False
+
         QgsMapTool.__init__(self, canvas)
 
+
+    def keyPressEvent(self, event):
+        # if event.modifiers() & Qt.ControlModifier:
+        if event.key() == Qt.Key_Control:
+            self.ctrl_pressed = True
+    
+
+    def keyReleaseEvent(self, event):
+        # if event.modifiers() & Qt.ControlModifier:
+        if event.key() == Qt.Key_Control:
+            self.ctrl_pressed = False
+
+
+    # def canvasMoveEvent(self, event): pass          --------------- выделение прямоугольником должно быть тут (частично)
+
+
     def canvasReleaseEvent(self, event):
+        
         # определяем координаты клика
         point = QgsGeometry.fromPointXY(event.mapPoint())
         
         # получаем активный слой
         layer = self.iface.activeLayer()
-        
-        # список объектов в выделении
-        selected_features = []
+
+
+        if not self.ctrl_pressed:
+            layer.removeSelection()
 
         # проходимся по объектам слоя, чтобы найти тот объект, который был нажат
         layer_features = layer.getFeatures()
@@ -59,48 +83,72 @@ class PointTool(QgsMapTool):
             feature_geometry = feature.geometry()
 
             if point.intersects(feature_geometry):
-                layer.select(feature.id())          # выделяем объект на карте
-                selected_features.append(feature)   # и помещаем в список
+                # не очищаем выделение, если нажат ctrl
+                if not self.ctrl_pressed:
+                    layer.removeSelection()
 
+                layer.select(feature.id())               # выделяем объект на карте
+                self.selected_features.append(feature)   # и помещаем в список
+                break                                    # прекращаем поиск
 
-        if len(selected_features) != 0:
+                
+        # selected_features понадобится, когда будем делать множественное редактирование
+        self.selected_features = list(layer.getSelectedFeatures())
+
+        if len(self.selected_features) != 0:
             # отображаем объект(ы) в таблице
-            self.display_attrs(selected_features)
+            self.display_attrs(self.selected_features)
         else:
-            self.parent.attributeTable.setRowCount(0)
-            layer.removeSelection()
-        
-        
-        # TODO: очистить таблицу
-        # self.parent.attributeTable.setRowCount(0)
+            if not self.ctrl_pressed:
+                self.parent.attributeTable.setRowCount(0)
+                self.selected_features = []
+                layer.removeSelection()
         
 
     def display_attrs(self, features):
         """Принимает список объектов и отображает их атрибуты"""
 
+
+        # создаем словарь с объектами вида "атрибут -> [список значений данного атрибута из всех features]"
+        data = {}
+        for feature in features:
+            feature_attr_map = feature.attributeMap()
+            for item in list(feature_attr_map.items()):
+                if item[0] in data:
+                    data[item[0]].append(item[1])
+                else:
+                    data[item[0]] = [item[1]]
+        
+        # print(data)
+        
+        # если значение конкретного атрибута одинаковы для всех features, то данное значение показывается
+        # если значения конкретного атрибута неодинаковы для всех features, то напротив атрибута вместо зачения выводится '***'
+        for key in data:
+            distinct_attrs = set(data[key])
+            if len(distinct_attrs) > 1:
+                data[key] = "***"
+            else:
+                data[key] = list(distinct_attrs)[0]
+      
+        # print(data)
+      
         # устанавливаем количество столбцов
         self.parent.attributeTable.setColumnCount(2)
-
         # устанавливаем заголовки столбцов
         self.parent.attributeTable.setHorizontalHeaderLabels(["Объект", "Значение"])
 
-        # --- задаем ширину столбцов в соответствии с шириной виджета таблицы
-        # self.parent.attributeTable.horizontalHeader().setSectionResizeMode(QHeaderView. ... ) Stretch, Interactive, ResizeToContents
 
-        table_row_count = 0
-        for i, feature in enumerate(features):
-            # создаем словарь с названиями и значениями атрибутов
-            feature_attr_map = features[i].attributeMap()
+        # # --- задаем ширину столбцов в соответствии с шириной виджета таблицы
+        # # self.parent.attributeTable.horizontalHeader().setSectionResizeMode(QHeaderView. ... ) Stretch, Interactive, ResizeToContents
 
-            table_row_count += len(feature_attr_map)
 
-            # устанавливаем кол-во строк в таблице
-            self.parent.attributeTable.setRowCount(table_row_count)
+        # устанавливаем кол-во строк в таблице
+        self.parent.attributeTable.setRowCount(len(data))
 
-            # заполняем таблицу
-            for j, item in enumerate(feature_attr_map.items()):
-                self.parent.attributeTable.setItem(table_row_count + j, 0, QTableWidgetItem(item[0]))
-                self.parent.attributeTable.setItem(table_row_count + j, 1, QTableWidgetItem(item[1]))
+        # заполняем таблицу
+        for j, item in enumerate(data.items()):
+            self.parent.attributeTable.setItem(j, 0, QTableWidgetItem(item[0]))
+            self.parent.attributeTable.setItem(j, 1, QTableWidgetItem(item[1]))
         
         # подгоняем ширину столбцов под их содержимое
         self.parent.attributeTable.resizeColumnsToContents()
