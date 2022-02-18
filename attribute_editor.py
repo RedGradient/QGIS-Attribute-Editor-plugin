@@ -25,7 +25,7 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtWidgets import QTableWidgetItem
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout
 from qgis.gui import QgsMapTool
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
@@ -105,6 +105,9 @@ class PointTool(QgsMapTool):
                 layer.removeSelection()
         
 
+    # def canvasReleaseEvent(self, event):
+    #     self.create_widget()
+
     def display_attrs(self, features):
         """Принимает список объектов и отображает их атрибуты"""
 
@@ -136,23 +139,31 @@ class PointTool(QgsMapTool):
         self.parent.attributeTable.setColumnCount(2)
         # устанавливаем заголовки столбцов
         self.parent.attributeTable.setHorizontalHeaderLabels(["Объект", "Значение"])
-
-
         # # --- задаем ширину столбцов в соответствии с шириной виджета таблицы
         # # self.parent.attributeTable.horizontalHeader().setSectionResizeMode(QHeaderView. ... ) Stretch, Interactive, ResizeToContents
-
-
         # устанавливаем кол-во строк в таблице
         self.parent.attributeTable.setRowCount(len(data))
-
         # заполняем таблицу
         for j, item in enumerate(data.items()):
             self.parent.attributeTable.setItem(j, 0, QTableWidgetItem(item[0]))
             self.parent.attributeTable.setItem(j, 1, QTableWidgetItem(item[1]))
-        
         # подгоняем ширину столбцов под их содержимое
         self.parent.attributeTable.resizeColumnsToContents()
 
+        # =====================
+        # 
+        # =====================
+        label = QLabel('my_label')
+        line_edit = QLineEdit()
+        hbox = QHBoxLayout()
+        hbox.addWidget(label)
+        hbox.addWidget(line_edit)
+        self.parent.attributeVBox.addItem(hbox)
+
+
+    def create_widget(self):
+        
+        # self.parent.attributeVBox.addWidget(line_edit)
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""

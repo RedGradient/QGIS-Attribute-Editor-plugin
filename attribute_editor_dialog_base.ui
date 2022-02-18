@@ -18,7 +18,7 @@
     <widget class="QTableWidget" name="attributeTable"/>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2"/>
+    <layout class="QVBoxLayout" name="attributeVBox"/>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="button_box">
