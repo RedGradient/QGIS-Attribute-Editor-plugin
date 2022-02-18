@@ -25,7 +25,7 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout
 from qgis.gui import QgsMapTool
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
@@ -105,9 +105,6 @@ class PointTool(QgsMapTool):
                 layer.removeSelection()
         
 
-    # def canvasReleaseEvent(self, event):
-    #     self.create_widget()
-
     def display_attrs(self, features):
         """Принимает список объектов и отображает их атрибуты"""
 
@@ -122,7 +119,7 @@ class PointTool(QgsMapTool):
                 else:
                     data[item[0]] = [item[1]]
         
-        # print(data)
+        
         
         # если значение конкретного атрибута одинаковы для всех features, то данное значение показывается
         # если значения конкретного атрибута неодинаковы для всех features, то напротив атрибута вместо зачения выводится '***'
@@ -133,8 +130,9 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = list(distinct_attrs)[0]
       
-        # print(data)
-      
+
+        # TODO: снятие выделения по нажатию на выделенный объект с нажатым ctrl
+
         # устанавливаем количество столбцов
         self.parent.attributeTable.setColumnCount(2)
         # устанавливаем заголовки столбцов
@@ -153,17 +151,14 @@ class PointTool(QgsMapTool):
         # =====================
         # 
         # =====================
-        label = QLabel('my_label')
-        line_edit = QLineEdit()
-        hbox = QHBoxLayout()
-        hbox.addWidget(label)
-        hbox.addWidget(line_edit)
-        self.parent.attributeVBox.addItem(hbox)
+        # label = QLabel('my_label'); line_edit = QLineEdit()
 
+        # hbox = QHBoxLayout()
+        # hbox.addChildWidget(label)
+        # hbox.addChildWidget(line_edit)
+        # self.parent.attrVBox.addChildLayout(hbox)
+        # self.parent.attributeVBox.addItem(hbox)
 
-    def create_widget(self):
-        
-        # self.parent.attributeVBox.addWidget(line_edit)
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
