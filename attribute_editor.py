@@ -39,6 +39,7 @@ import os.path
 
 class PointTool(QgsMapTool):   
     def __init__(self, parent, iface, canvas):
+        self.line_edit_list = []
         self.parent = parent
         self.iface = iface
 
@@ -49,61 +50,74 @@ class PointTool(QgsMapTool):
 
         QgsMapTool.__init__(self, canvas)
 
-
     def keyPressEvent(self, event):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
             self.ctrl_pressed = True
     
-
     def keyReleaseEvent(self, event):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
             self.ctrl_pressed = False
 
-
-    # def canvasMoveEvent(self, event): pass          --------------- выделение прямоугольником должно быть тут (частично)
-
-
     def canvasReleaseEvent(self, event):
-        
         # определяем координаты клика
         point = QgsGeometry.fromPointXY(event.mapPoint())
         
-        # получаем активный слой
+        pressed_features = self.get_features_in_geometry(point)
         layer = self.iface.activeLayer()
 
-
+        # widgets should be removed anyway
+        self.clear_layout(self.parent.attrBox)
+        
+        # support selection with ctrl
         if not self.ctrl_pressed:
             layer.removeSelection()
+            self.selected_features = []
+            if len(pressed_features) == 0:
+                self.clear_layout(self.parent.attrBox)
 
-        # проходимся по объектам слоя, чтобы найти тот объект, который был нажат
+                # remove old saveBtn callback
+                self.parent.saveBtn.clicked.connect(lambda *args: None)
+                # self.parent.saveBtn.clicked.disconnect()
+
+                return None
+
+        # select pressed features on the layer
+        for feature in pressed_features:
+            layer.select(feature.id())
+            self.selected_features.append(feature)
+
+        self.display_attrs(self.selected_features)
+
+    def get_features_in_geometry(self, geometry):
+        """Returns features in geometry"""
+
+        # get active layer
+        layer = self.iface.activeLayer()
+
+        # list of found features
+        result = []
+
+        # iterate over features in the layer to find features that intersect the point
         layer_features = layer.getFeatures()
         for feature in layer_features:
-            feature_geometry = feature.geometry()
+            if geometry.intersects(feature.geometry()):
+                result.append(feature)
 
-            if point.intersects(feature_geometry):
-                # не очищаем выделение, если нажат ctrl
-                if not self.ctrl_pressed:
-                    layer.removeSelection()
+        return result
 
-                layer.select(feature.id())               # выделяем объект на карте
-                self.selected_features.append(feature)   # и помещаем в список
-                break                                    # прекращаем поиск
+    def clear_layout(self, layout):
+        """Gets layout and clears it"""
 
-                
-        # selected_features понадобится, когда будем делать множественное редактирование
-        self.selected_features = list(layer.getSelectedFeatures())
-
-        if len(self.selected_features) != 0:
-            # отображаем объект(ы) в таблице
-            self.display_attrs(self.selected_features)
-        else:
-            if not self.ctrl_pressed:
-                self.parent.attributeTable.setRowCount(0)
-                self.selected_features = []
-                layer.removeSelection()
-        
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
 
     def display_attrs(self, features):
         """Принимает список объектов и отображает их атрибуты"""
@@ -118,47 +132,67 @@ class PointTool(QgsMapTool):
                     data[item[0]].append(item[1])
                 else:
                     data[item[0]] = [item[1]]
-        
-        
-        
+
         # если значение конкретного атрибута одинаковы для всех features, то данное значение показывается
         # если значения конкретного атрибута неодинаковы для всех features, то напротив атрибута вместо зачения выводится '***'
         for key in data:
             distinct_attrs = set(data[key])
             if len(distinct_attrs) > 1:
                 data[key] = "***"
+            elif list(distinct_attrs)[0] == "":
+                data[key] = "-"
             else:
-                data[key] = list(distinct_attrs)[0]
+                data[key] = str(list(distinct_attrs)[0])
       
 
         # TODO: снятие выделения по нажатию на выделенный объект с нажатым ctrl
+        # TODO: после закрытия окна активным инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
-        # устанавливаем количество столбцов
-        self.parent.attributeTable.setColumnCount(2)
-        # устанавливаем заголовки столбцов
-        self.parent.attributeTable.setHorizontalHeaderLabels(["Объект", "Значение"])
-        # # --- задаем ширину столбцов в соответствии с шириной виджета таблицы
-        # # self.parent.attributeTable.horizontalHeader().setSectionResizeMode(QHeaderView. ... ) Stretch, Interactive, ResizeToContents
-        # устанавливаем кол-во строк в таблице
-        self.parent.attributeTable.setRowCount(len(data))
-        # заполняем таблицу
-        for j, item in enumerate(data.items()):
-            self.parent.attributeTable.setItem(j, 0, QTableWidgetItem(item[0]))
-            self.parent.attributeTable.setItem(j, 1, QTableWidgetItem(item[1]))
-        # подгоняем ширину столбцов под их содержимое
-        self.parent.attributeTable.resizeColumnsToContents()
+        # list of QLineEdit widgets
+        self.line_edit_list = []
 
-        # =====================
-        # 
-        # =====================
-        # label = QLabel('my_label'); line_edit = QLineEdit()
+        # show attributes
+        for i, item in enumerate(data.items()):
+            label = QLabel(item[0])
+            line_edit = QLineEdit()
+            line_edit.setTextMargins(2, 0, 2, 0)
+            self.line_edit_list.append(line_edit)
 
-        # hbox = QHBoxLayout()
-        # hbox.addChildWidget(label)
-        # hbox.addChildWidget(line_edit)
-        # self.parent.attrVBox.addChildLayout(hbox)
-        # self.parent.attributeVBox.addItem(hbox)
+            if item[1] == '-' or item[1] == '***':
+                line_edit.setPlaceholderText(str(item[1]))
+            else:
+                line_edit.setText(str(item[1]))
 
+            hbox = QHBoxLayout()
+            hbox.insertWidget(-1, label)
+            hbox.insertWidget(-1, line_edit)
+
+            self.parent.attrBox.insertLayout(-1, hbox)
+
+        # TODO: должен отрабатывать единожды
+        self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
+
+    def on_saveBtn_clicked(self):
+        # def save():
+        #
+        # return save
+        if len(self.line_edit_list) == 0:
+            return None
+
+        new_attr_values = []
+        for widget in self.line_edit_list:
+            new_attr_values.append(widget.text())
+
+
+        # l.startEditing()
+        # l.commitChanges()
+        # self.iface.activeLayer().startEditing()
+        for feature in self.selected_features:
+            pass
+            # for ...
+                # self.iface.activeLayer().changeAttributeValue(feature.id(), feature.attribute().index(''))
+        # self.iface.activeLayer().commitChanges()
+        print("saved")
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
@@ -174,7 +208,6 @@ class AttributeEditor:
         # Save reference to the QGIS interface
         self.iface = iface
 
-        # Холст
         self.canvas = self.iface.mapCanvas()
 
         # initialize plugin directory
@@ -322,15 +355,18 @@ class AttributeEditor:
             self.dlg = AttributeEditorDialog()
 
 
-        # установка "always on top"
+        # установка "always on top" (не работает в Linux)
         self.dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
         
         self.map_tool = PointTool(self.dlg, self.iface, self.canvas)
-        self.set_map_tool()
+        self.canvas.setMapTool(self.map_tool)
+
+        # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
+        selected_features = list(self.iface.activeLayer().getSelectedFeatures())
+        self.map_tool.display_attrs(selected_features)
 
         # show the dialog
         self.dlg.show()
-
 
         # Run the dialog event loop
         result = self.dlg.exec_()
@@ -341,11 +377,10 @@ class AttributeEditor:
             # substitute with your code.
             pass
 
-    def set_map_tool(self):
-        self.canvas.setMapTool(self.map_tool)
+    # def set_map_tool(self):
+    #     self.canvas.setMapTool(self.map_tool)
     
     # def unset_map_tool(self):
-        
     #     self.map_tool.layer.canvas.unsetMapTool(self.map_tool)
         
     
