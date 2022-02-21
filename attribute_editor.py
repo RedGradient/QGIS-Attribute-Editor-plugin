@@ -176,7 +176,8 @@ class PointTool(QgsMapTool):
             self.parent.attrBox.insertLayout(-1, hbox)
 
     @staticmethod
-    def get_diff_and_index(attr_values):
+    def get_changed_attrs(attr_values):
+        """Gets changed attributes"""
         result = {}
         for i, value in enumerate(attr_values):
             if value[0] != value[1]:
@@ -184,6 +185,7 @@ class PointTool(QgsMapTool):
         return result
 
     def on_saveBtn_clicked(self):
+        """Saves changed attributes"""
         if len(self.line_edit_list) == 0:
             return None
 
@@ -191,7 +193,7 @@ class PointTool(QgsMapTool):
         for widget in self.line_edit_list:
             current_attr_values.append(widget.text())
 
-        new_attr_values = self.get_diff_and_index(tuple(zip(self.old_attr_values, current_attr_values)))
+        new_attr_values = self.get_changed_attrs(tuple(zip(self.old_attr_values, current_attr_values)))
         self.iface.activeLayer().startEditing()
         for feature in self.selected_features:
             for attr in new_attr_values.items():
