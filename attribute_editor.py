@@ -43,10 +43,15 @@ class PointTool(QgsMapTool):
         self.parent = parent
         self.iface = iface
 
-        # список объектов в выделении
+        self.first_start = True
         self.selected_features = []
 
         self.ctrl_pressed = False
+
+        # set callback at first satrt
+        if self.first_start:
+            self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
+            self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
 
@@ -76,9 +81,9 @@ class PointTool(QgsMapTool):
             self.selected_features = []
             if len(pressed_features) == 0:
                 self.clear_layout(self.parent.attrBox)
-
+                self.line_edit_list = []
                 # remove old saveBtn callback
-                self.parent.saveBtn.clicked.connect(lambda *args: None)
+                # self.parent.saveBtn.clicked.connect(lambda *args: None)
                 # self.parent.saveBtn.clicked.disconnect()
 
                 return None
@@ -146,7 +151,7 @@ class PointTool(QgsMapTool):
       
 
         # TODO: снятие выделения по нажатию на выделенный объект с нажатым ctrl
-        # TODO: после закрытия окна активным инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
+        # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
         # list of QLineEdit widgets
         self.line_edit_list = []
@@ -169,13 +174,8 @@ class PointTool(QgsMapTool):
 
             self.parent.attrBox.insertLayout(-1, hbox)
 
-        # TODO: должен отрабатывать единожды
-        self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
 
     def on_saveBtn_clicked(self):
-        # def save():
-        #
-        # return save
         if len(self.line_edit_list) == 0:
             return None
 
@@ -183,15 +183,19 @@ class PointTool(QgsMapTool):
         for widget in self.line_edit_list:
             new_attr_values.append(widget.text())
 
-
         # l.startEditing()
         # l.commitChanges()
+
         # self.iface.activeLayer().startEditing()
         for feature in self.selected_features:
-            pass
+            f_attr_map = feature.attributeMap()
+            f_attr_values = feature.attributes()
+            for i in 
+
             # for ...
                 # self.iface.activeLayer().changeAttributeValue(feature.id(), feature.attribute().index(''))
         # self.iface.activeLayer().commitChanges()
+
         print("saved")
 
 class AttributeEditor:
@@ -353,7 +357,6 @@ class AttributeEditor:
         if self.first_start == True:
             self.first_start = False
             self.dlg = AttributeEditorDialog()
-
 
         # установка "always on top" (не работает в Linux)
         self.dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
