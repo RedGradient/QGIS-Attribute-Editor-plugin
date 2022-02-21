@@ -37,3 +37,14 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         self.setupUi(self)
+
+
+FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'feature_selector_dialog_base.ui'))
+
+
+class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(FeatureSelectDialog, self).__init__(parent)
+        self.setupUi(self)

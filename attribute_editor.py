@@ -25,7 +25,7 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton
 from qgis.gui import QgsMapTool
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
@@ -33,7 +33,7 @@ from qgis._core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .attribute_editor_dialog import AttributeEditorDialog
+from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog
 import os.path
 
 
@@ -84,12 +84,34 @@ class PointTool(QgsMapTool):
                 self.line_edit_list = []
                 return None
 
+        # show dialog with choice of features if there are more than one feature on press point
+        if len(pressed_features) > 1:
+            print("dlg show")
+            # show dialog with layer selector
+            self.feat_select_dlg = FeatureSelectDialog()
+            for feature in pressed_features:
+                btn = QPushButton()
+                btn.setText(str(feature.attributes()[0]))
+                btn.clicked.connect(self.on_select_feat_btn_clicked(feature))
+                self.feat_select_dlg.featBox.insertWidget(-1, btn)
+            self.feat_select_dlg.show()
+            result = self.feat_select_dlg.exec_()
+            return None
+
         # select pressed features on the layer
         for feature in pressed_features:
             layer.select(feature.id())
             self.selected_features.append(feature)
 
         self.display_attrs(self.selected_features)
+
+    def on_select_feat_btn_clicked(self, feature):
+        """It is callback for feature button in feature choice dialog. It gets feature and show it"""
+        def closure():
+            self.display_attrs([feature])
+            self.iface.activeLayer().select(feature.id())
+            self.feat_select_dlg.reject()
+        return closure
 
     def get_features_in_geometry(self, geometry):
         """Returns features in geometry"""
