@@ -37,18 +37,19 @@ from .attribute_editor_dialog import AttributeEditorDialog
 import os.path
 
 
-class PointTool(QgsMapTool):   
+class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas):
         self.line_edit_list = []
         self.parent = parent
         self.iface = iface
+        self.old_attr_values = []
 
         self.first_start = True
         self.selected_features = []
 
         self.ctrl_pressed = False
 
-        # set callback at first satrt
+        # set callback at first start
         if self.first_start:
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             self.first_start = False
@@ -66,14 +67,13 @@ class PointTool(QgsMapTool):
             self.ctrl_pressed = False
 
     def canvasReleaseEvent(self, event):
-        # определяем координаты клика
         point = QgsGeometry.fromPointXY(event.mapPoint())
-        
         pressed_features = self.get_features_in_geometry(point)
         layer = self.iface.activeLayer()
 
-        # widgets should be removed anyway
+        # these should be removed anyway
         self.clear_layout(self.parent.attrBox)
+        self.old_attr_values = []
         
         # support selection with ctrl
         if not self.ctrl_pressed:
@@ -82,10 +82,6 @@ class PointTool(QgsMapTool):
             if len(pressed_features) == 0:
                 self.clear_layout(self.parent.attrBox)
                 self.line_edit_list = []
-                # remove old saveBtn callback
-                # self.parent.saveBtn.clicked.connect(lambda *args: None)
-                # self.parent.saveBtn.clicked.disconnect()
-
                 return None
 
         # select pressed features on the layer
@@ -131,7 +127,10 @@ class PointTool(QgsMapTool):
         # создаем словарь с объектами вида "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
         for feature in features:
-            feature_attr_map = feature.attributeMap()
+            feature_attr_map = dict(zip(
+                list(map(lambda f: f.displayName(), feature.fields())),
+                feature.attributes()
+            ))
             for item in list(feature_attr_map.items()):
                 if item[0] in data:
                     data[item[0]].append(item[1])
@@ -165,8 +164,10 @@ class PointTool(QgsMapTool):
 
             if item[1] == '-' or item[1] == '***':
                 line_edit.setPlaceholderText(str(item[1]))
+                self.old_attr_values.append('')
             else:
                 line_edit.setText(str(item[1]))
+                self.old_attr_values.append(str(item[1]))
 
             hbox = QHBoxLayout()
             hbox.insertWidget(-1, label)
@@ -174,27 +175,29 @@ class PointTool(QgsMapTool):
 
             self.parent.attrBox.insertLayout(-1, hbox)
 
+    @staticmethod
+    def get_diff_and_index(attr_values):
+        result = {}
+        for i, value in enumerate(attr_values):
+            if value[0] != value[1]:
+                result[i] = value[1]
+        return result
 
     def on_saveBtn_clicked(self):
         if len(self.line_edit_list) == 0:
             return None
 
-        new_attr_values = []
+        current_attr_values = []
         for widget in self.line_edit_list:
-            new_attr_values.append(widget.text())
+            current_attr_values.append(widget.text())
 
-        # l.startEditing()
-        # l.commitChanges()
-
-        # self.iface.activeLayer().startEditing()
+        new_attr_values = self.get_diff_and_index(tuple(zip(self.old_attr_values, current_attr_values)))
+        self.iface.activeLayer().startEditing()
         for feature in self.selected_features:
-            f_attr_map = feature.attributeMap()
-            f_attr_values = feature.attributes()
-            for i in 
+            for attr in new_attr_values.items():
+                self.iface.activeLayer().changeAttributeValue(feature.id(), attr[0], attr[1])
 
-            # for ...
-                # self.iface.activeLayer().changeAttributeValue(feature.id(), feature.attribute().index(''))
-        # self.iface.activeLayer().commitChanges()
+        self.iface.activeLayer().commitChanges()
 
         print("saved")
 
@@ -250,7 +253,6 @@ class AttributeEditor:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('AttributeEditor', message)
-
 
     def add_action(
         self,
