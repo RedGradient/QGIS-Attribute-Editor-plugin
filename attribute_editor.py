@@ -35,6 +35,7 @@ from .resources import *
 # Import the code for the dialog
 from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog
 import os.path
+import xml.etree.ElementTree as ET
 
 
 class PointTool(QgsMapTool):
@@ -103,7 +104,16 @@ class PointTool(QgsMapTool):
             layer.select(feature.id())
             self.selected_features.append(feature)
 
+        self.node = self.get_layer_node()
+
         self.display_attrs(self.selected_features)
+
+    @staticmethod
+    def get_layer_node(root, layer_name):
+        """Searches for node corresponding to the given layer name"""
+        for node in root.iter('tLayer'):
+            if node.attrib.get('name') == layer_name:
+                return node
 
     def on_select_feat_btn_clicked(self, feature):
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
@@ -262,6 +272,9 @@ class AttributeEditor:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        # load attribute meta info
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
