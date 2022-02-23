@@ -25,7 +25,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
+    QPushButton, QComboBox, QWidget
 from qgis.gui import QgsMapTool
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
@@ -37,10 +38,13 @@ from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog
 import os.path
 import xml.etree.ElementTree as ET
 
+CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS data/classifier.grq')
+RS = ET.parse(os.path.dirname(__file__) + '/RS data/RS.mixml')
+
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas):
-        self.line_edit_list = []
+        self.input_widget_list = []
         self.parent = parent
         self.iface = iface
         self.old_attr_values = []
@@ -61,7 +65,7 @@ class PointTool(QgsMapTool):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
             self.ctrl_pressed = True
-    
+
     def keyReleaseEvent(self, event):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
@@ -75,14 +79,14 @@ class PointTool(QgsMapTool):
         # these should be removed anyway
         self.clear_layout(self.parent.attrBox)
         self.old_attr_values = []
-        
+
         # support selection with ctrl
         if not self.ctrl_pressed:
             layer.removeSelection()
             self.selected_features = []
             if len(pressed_features) == 0:
                 self.clear_layout(self.parent.attrBox)
-                self.line_edit_list = []
+                self.input_widget_list = []
                 return None
 
         # show dialog with choice of features if there are more than one feature on press point
@@ -104,8 +108,6 @@ class PointTool(QgsMapTool):
             layer.select(feature.id())
             self.selected_features.append(feature)
 
-        self.node = self.get_layer_node()
-
         self.display_attrs(self.selected_features)
 
     @staticmethod
@@ -117,10 +119,12 @@ class PointTool(QgsMapTool):
 
     def on_select_feat_btn_clicked(self, feature):
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
+
         def closure():
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
             self.feat_select_dlg.reject()
+
         return closure
 
     def get_features_in_geometry(self, geometry):
@@ -153,8 +157,7 @@ class PointTool(QgsMapTool):
                     self.clear_layout(item.layout())
 
     def display_attrs(self, features):
-        """Принимает список объектов и отображает их атрибуты"""
-
+        """Takes feature list and display their attributes"""
 
         # создаем словарь с объектами вида "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
@@ -179,33 +182,93 @@ class PointTool(QgsMapTool):
                 data[key] = "-"
             else:
                 data[key] = str(list(distinct_attrs)[0])
-      
 
         # TODO: снятие выделения по нажатию на выделенный объект с нажатым ctrl
         # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
         # list of QLineEdit widgets
-        self.line_edit_list = []
+        self.input_widget_list = []
+
+        node = self.get_layer_node(RS.getroot(), self.iface.activeLayer().name())
+
+        # -------------------
+        readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
+        meta = self.get_fields_meta(node, {})
+        # -------------------
+
+        print(meta)
 
         # show attributes
         for i, item in enumerate(data.items()):
             label = QLabel(item[0])
-            line_edit = QLineEdit()
-            line_edit.setTextMargins(2, 0, 2, 0)
-            self.line_edit_list.append(line_edit)
+            input_widget = QWidget()
 
-            if item[1] == '-' or item[1] == '***':
-                line_edit.setPlaceholderText(str(item[1]))
-                self.old_attr_values.append('')
-            else:
-                line_edit.setText(str(item[1]))
-                self.old_attr_values.append(str(item[1]))
+            if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
+                input_widget = QLineEdit()
+                input_widget.setTextMargins(2, 0, 2, 0)
 
+                if item[1] == '-' or item[1] == '***':
+                    input_widget.setPlaceholderText(str(item[1]))
+                    self.old_attr_values.append('')
+                else:
+                    input_widget.setText(item[1])
+                    self.old_attr_values.append(str(item[1]))
+
+            if meta[item[0]]["type"] == "Dir":
+                input_widget = QComboBox()
+                input_widget.addItems(meta[item[0]]["choice"])
+
+            if meta[item[0]]["type"] == "DirRef":
+                input_widget = QComboBox()
+                # input_widget.setEditable(True)
+                input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
+                attribute = meta[item[0]]["fieldRef"]
+                for code in meta[attribute]["choice"]:
+                    input_widget.addItem(readable_values[code])
+
+            self.input_widget_list.append(input_widget)
             hbox = QHBoxLayout()
             hbox.insertWidget(-1, label)
-            hbox.insertWidget(-1, line_edit)
-
+            hbox.insertWidget(-1, input_widget)
             self.parent.attrBox.insertLayout(-1, hbox)
+
+    def get_readable_name(self, node, acc):
+        """Takes xml node and returns all <name>.text from it"""
+        for i in node:
+            if i.tag == "Directory":
+                self.get_readable_name(i, acc)
+                continue
+            if i.tag == "DirElement":
+                self.get_readable_name(i, acc)
+                continue
+            if i.tag == "name":
+                acc.update({node.attrib["FullCode"]: i.text})
+                continue
+        return acc
+
+    def get_fields_meta(self, node, accum):
+        for i in node:
+            if i.tag == "field":
+                is_required = i[0].attrib.get("Required")
+                if is_required is not None:
+                    accum[i.attrib["name"]] = {"Required": True}
+                else:
+                    accum[i.attrib["name"]] = {"Required": False}
+                self.get_fields_meta(i[0], accum)
+                continue
+            if i.tag in ["Char", "Int", "Decimal"]:
+                accum[list(accum.keys())[-1]].update({"type": i.tag})
+                return None
+            if i.tag == "Dir":
+                values = []
+                for val in i[0]:
+                    values.append(val.text)
+                accum[list(accum.keys())[-1]].update({"type": "Dir", "choice": values})
+                return None
+            if i.tag == "DirValue":
+                accum[list(accum.keys())[-1]].update({"type": "DirRef", "fieldRef": i[0].attrib.get("name")})
+                return None
+        return accum
 
     @staticmethod
     def get_changed_attrs(attr_values):
@@ -218,11 +281,11 @@ class PointTool(QgsMapTool):
 
     def on_saveBtn_clicked(self):
         """Saves changed attributes"""
-        if len(self.line_edit_list) == 0:
+        if len(self.input_widget_list) == 0:
             return None
 
         current_attr_values = []
-        for widget in self.line_edit_list:
+        for widget in self.input_widget_list:
             current_attr_values.append(widget.text())
 
         new_attr_values = self.get_changed_attrs(tuple(zip(self.old_attr_values, current_attr_values)))
@@ -234,6 +297,7 @@ class PointTool(QgsMapTool):
         self.iface.activeLayer().commitChanges()
 
         print("saved")
+
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
@@ -275,7 +339,6 @@ class AttributeEditor:
 
         # load attribute meta info
 
-
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -292,16 +355,16 @@ class AttributeEditor:
         return QCoreApplication.translate('AttributeEditor', message)
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -378,7 +441,6 @@ class AttributeEditor:
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -386,7 +448,6 @@ class AttributeEditor:
                 self.tr(u'&Редактор атрибутов'),
                 action)
             self.iface.removeToolBarIcon(action)
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -399,7 +460,7 @@ class AttributeEditor:
 
         # установка "always on top" (не работает в Linux)
         self.dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
-        
+
         self.map_tool = PointTool(self.dlg, self.iface, self.canvas)
         self.canvas.setMapTool(self.map_tool)
 
@@ -421,8 +482,6 @@ class AttributeEditor:
 
     # def set_map_tool(self):
     #     self.canvas.setMapTool(self.map_tool)
-    
+
     # def unset_map_tool(self):
     #     self.map_tool.layer.canvas.unsetMapTool(self.map_tool)
-        
-    
