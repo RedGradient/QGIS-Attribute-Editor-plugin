@@ -199,11 +199,20 @@ class PointTool(QgsMapTool):
         print(meta)
 
         # show attributes
-        for i, item in enumerate(data.items()):
-            label = QLabel(item[0])
-            input_widget = QWidget()
+        iterator = iter(data.items())
+        stop_iteration_flag = False
+        index = -1
+        self.dict_variants = {}
+        for item in iterator:
+            index += 1
+            # label = QLabel(item[0])
+            # input_widget = QWidget()
+
+            hbox = QHBoxLayout()
 
             if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
+                label = QLabel(item[0])
+
                 input_widget = QLineEdit()
                 input_widget.setTextMargins(2, 0, 2, 0)
 
@@ -213,24 +222,53 @@ class PointTool(QgsMapTool):
                 else:
                     input_widget.setText(item[1])
                     self.old_attr_values.append(str(item[1]))
+                hbox.insertWidget(-1, label)
+                hbox.insertWidget(-1, input_widget)
 
             if meta[item[0]]["type"] == "Dir":
-                input_widget = QComboBox()
-                input_widget.addItems(meta[item[0]]["choice"])
+                # Dir
+                dir_choice = []
 
-            if meta[item[0]]["type"] == "DirRef":
-                input_widget = QComboBox()
-                # input_widget.setEditable(True)
-                input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
-                attribute = meta[item[0]]["fieldRef"]
-                for code in meta[attribute]["choice"]:
-                    input_widget.addItem(readable_values[code])
+                dir_label = QLabel(item[0])
+                dir_input_widget = QComboBox()
+                dir_input_widget.setSizeAdjustPolicy(dir_input_widget.AdjustToMinimumContentsLength)
+                # dir_input_widget.currentIndexChanged.connect(self.on_currentIndexChanged)
+                for code in meta[item[0]]["choice"]:
+                    dir_input_widget.addItem(code)
+                    dir_choice.append(code)
 
-            self.input_widget_list.append(input_widget)
-            hbox = QHBoxLayout()
-            hbox.insertWidget(-1, label)
-            hbox.insertWidget(-1, input_widget)
+                hbox.insertWidget(-1, dir_label)
+                hbox.insertWidget(-1, dir_input_widget)
+                self.input_widget_list.append(dir_input_widget)
+
+                # DirRef
+                dirref_choice = []
+
+                attribute_name = list(data)[index + 1]
+                dirref_label = QLabel(attribute_name)
+                dirref_input_widget = QComboBox()
+                dirref_input_widget.setSizeAdjustPolicy(dirref_input_widget.AdjustToMinimumContentsLength)
+                ref_attribute = meta[attribute_name]["fieldRef"]
+                # print(meta[attribute_name])
+                for code in meta[ref_attribute]["choice"]:
+                    dirref_input_widget.addItem(readable_values[code])
+                    dirref_choice.append(readable_values[code])
+
+                hbox.insertWidget(-1, dirref_label)
+                hbox.insertWidget(-1, dirref_input_widget)
+                self.input_widget_list.append(dirref_input_widget)
+
+                self.dict_variants.update({(dir_input_widget, dirref_input_widget): [dir_choice, dirref_choice]})
+
+                try:
+                    next(iterator)
+                    index += 1
+                except StopIteration:
+                    stop_iteration_flag = True
+
             self.parent.attrBox.insertLayout(-1, hbox)
+            if stop_iteration_flag:
+                break
 
     def get_readable_name(self, node, acc):
         """Takes xml node and returns all <name>.text from it"""
@@ -298,6 +336,9 @@ class PointTool(QgsMapTool):
 
         print("saved")
 
+    def on_currentIndexChanged(self, event):
+
+        print("on_currentIndexChanged")
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
