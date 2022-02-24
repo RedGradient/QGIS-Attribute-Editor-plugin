@@ -217,30 +217,45 @@ class PointTool(QgsMapTool):
 
             if meta[item[0]]["type"] == "Dir":
                 input_widget = QComboBox()
-
-                # l_e = QLineEdit()
-                # input_widget.setLineEdit(l_e)
-
                 input_widget.setEditable(True)
 
-                # if item[1] in ['-', '***']:
-                #     input_widget.setPlaceholderText(str(item[1]))
-                #     self.old_attr_values.append('')
-                # else:
-                #     input_widget.lineEdit().setText(item[1])
-                #     self.old_attr_values.append(str(item[1]))
+                lineEdit = QLineEdit()
+                input_widget.setLineEdit(lineEdit)
 
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
+                input_widget.addItem("")
                 input_widget.addItems(meta[item[0]]["choice"])
+
+                if item[1] in ['-', '***']:
+                    input_widget.lineEdit().setPlaceholderText(str(item[1]))
+                    self.old_attr_values.append('')
+                else:
+                    print("else Dir", item[1])
+                    input_widget.lineEdit().setText(item[1])
+                    self.old_attr_values.append(str(item[1]))
+
                 self.combo_list.append(input_widget)
 
             if meta[item[0]]["type"] == "DirRef":
                 input_widget = QComboBox()
                 input_widget.setEditable(True)
+
+                lineEdit = QLineEdit()
+                input_widget.setLineEdit(lineEdit)
+
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
                 attribute = meta[item[0]]["fieldRef"]
+                input_widget.addItem("")
                 for code in meta[attribute]["choice"]:
                     input_widget.addItem(readable_values[code])
+
+                if item[1] in ['-', '***']:
+                    input_widget.lineEdit().setPlaceholderText(str(item[1]))
+                    self.old_attr_values.append('')
+                else:
+                    print("else DirRef", item[1])
+                    input_widget.lineEdit().setText(item[1])
+                    self.old_attr_values.append(str(item[1]))
 
                 self.combo_list[-1].currentIndexChanged.connect(self.on_currentIndexChanged(input_widget))
                 input_widget.currentIndexChanged.connect(self.on_currentIndexChanged(self.combo_list[-1]))
