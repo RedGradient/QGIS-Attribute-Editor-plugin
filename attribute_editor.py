@@ -196,7 +196,7 @@ class PointTool(QgsMapTool):
         meta = self.get_fields_meta(node, {})
         # -------------------
 
-        print(meta)
+        # print(meta)
 
         # show attributes
         self.combo_list = []
@@ -220,6 +220,7 @@ class PointTool(QgsMapTool):
                 input_widget.setEditable(True)
 
                 lineEdit = QLineEdit()
+                lineEdit.setTextMargins(2, 0, 2, 0)
                 input_widget.setLineEdit(lineEdit)
 
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
@@ -230,7 +231,6 @@ class PointTool(QgsMapTool):
                     input_widget.lineEdit().setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
                 else:
-                    print("else Dir", item[1])
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
 
@@ -241,6 +241,7 @@ class PointTool(QgsMapTool):
                 input_widget.setEditable(True)
 
                 lineEdit = QLineEdit()
+                lineEdit.setTextMargins(2, 0, 2, 0)
                 input_widget.setLineEdit(lineEdit)
 
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
@@ -253,7 +254,6 @@ class PointTool(QgsMapTool):
                     input_widget.lineEdit().setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
                 else:
-                    print("else DirRef", item[1])
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
 
