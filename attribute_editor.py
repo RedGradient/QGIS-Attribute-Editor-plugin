@@ -79,7 +79,7 @@ class PointTool(QgsMapTool):
         layer = self.iface.activeLayer()
 
         # these should be removed anyway
-        self.clear_layout(self.parent.attrBox)
+        # self.clear_layout(self.parent.attrBox)
         self.old_attr_values = []
 
         # support selection with ctrl
@@ -87,7 +87,7 @@ class PointTool(QgsMapTool):
             layer.removeSelection()
             self.selected_features = []
             if len(pressed_features) == 0:
-                self.clear_layout(self.parent.attrBox)
+                # self.clear_layout(self.parent.attrBox)
                 self.input_widget_list = []
                 return None
 
@@ -160,6 +160,8 @@ class PointTool(QgsMapTool):
     def display_attrs(self, features):
         """Takes feature list and display their attributes"""
 
+
+
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
         for feature in features:
@@ -187,6 +189,9 @@ class PointTool(QgsMapTool):
         # TODO: снятие выделения по клику на выделенный объект с нажатым ctrl
         # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
+        self.parent.tableWidget.setColumnCount(2)
+        self.parent.tableWidget.setRowCount(len(data))
+
         # list of QLineEdit widgets; needs for saving
         self.input_widget_list = []
         node = self.get_layer_node(RS.getroot(), self.iface.activeLayer().name())
@@ -201,7 +206,6 @@ class PointTool(QgsMapTool):
 
             if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
                 input_widget = CustomLineEdit()
-
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
@@ -263,10 +267,13 @@ class PointTool(QgsMapTool):
                 input_widget.currentIndexChanged.connect(self.on_currentIndexChanged(self.combo_list[-1]))
 
             self.input_widget_list.append(input_widget)
-            hbox = QHBoxLayout()
-            hbox.insertWidget(-1, label)
-            hbox.insertWidget(-1, input_widget)
-            self.parent.attrBox.insertLayout(-1, hbox)
+            # hbox = QHBoxLayout()
+            # hbox.insertWidget(-1, label)
+            # hbox.insertWidget(-1, input_widget)
+            # self.parent.attrBox.insertLayout(-1, hbox)
+
+            self.parent.tableWidget.setCellWidget(i, 0, label)
+            self.parent.tableWidget.setCellWidget(i, 1, input_widget)
 
     def get_readable_name(self, node, acc):
         """Takes xml node and returns all <name>.text from it"""
