@@ -36,7 +36,7 @@ from qgis._core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog, CustomLineEdit, CustomComboBox
+from .attribute_editor_dialog import *
 import os.path
 import xml.etree.ElementTree as ET
 
@@ -80,6 +80,7 @@ class PointTool(QgsMapTool):
 
         # these should be removed anyway
         # self.clear_layout(self.parent.attrBox)
+        self.parent.table.setRowCount(0)
         self.old_attr_values = []
 
         # support selection with ctrl
@@ -88,6 +89,7 @@ class PointTool(QgsMapTool):
             self.selected_features = []
             if len(pressed_features) == 0:
                 # self.clear_layout(self.parent.attrBox)
+                self.parent.table.setRowCount(0)
                 self.input_widget_list = []
                 return None
 
@@ -189,8 +191,7 @@ class PointTool(QgsMapTool):
         # TODO: снятие выделения по клику на выделенный объект с нажатым ctrl
         # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
-        self.parent.tableWidget.setColumnCount(2)
-        self.parent.tableWidget.setRowCount(len(data))
+        self.parent.table.setRowCount(len(data))
 
         # list of QLineEdit widgets; needs for saving
         self.input_widget_list = []
@@ -271,9 +272,9 @@ class PointTool(QgsMapTool):
             # hbox.insertWidget(-1, label)
             # hbox.insertWidget(-1, input_widget)
             # self.parent.attrBox.insertLayout(-1, hbox)
-
-            self.parent.tableWidget.setCellWidget(i, 0, label)
-            self.parent.tableWidget.setCellWidget(i, 1, input_widget)
+            self.parent.table.setRowHeight(i, 4)
+            self.parent.table.setCellWidget(i, 0, label)
+            self.parent.table.setCellWidget(i, 1, input_widget)
 
     def get_readable_name(self, node, acc):
         """Takes xml node and returns all <name>.text from it"""

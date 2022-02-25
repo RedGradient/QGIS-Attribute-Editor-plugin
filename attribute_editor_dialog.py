@@ -36,7 +36,14 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
-        self.setupUi(self)
+        # self.setupUi(self)
+
+        self.vbox = QtWidgets.QVBoxLayout()
+        self.table = CustomTableWidget()
+        self.saveBtn = QtWidgets.QPushButton("Сохранить")
+        self.vbox.insertWidget(-1, self.table)
+        self.vbox.insertWidget(-1, self.saveBtn)
+        self.setLayout(self.vbox)
 
 
 FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -55,6 +62,7 @@ class CustomLineEdit(QtWidgets.QLineEdit):
         """Constructor"""
         super(CustomLineEdit, self).__init__(parent)
         self.setTextMargins(2, 0, 2, 0)
+        self.setStyleSheet("border: 0px")
 
     def setDangerStyle(self):
         self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
@@ -76,9 +84,19 @@ class CustomComboBox(QtWidgets.QComboBox):
         lineEdit = CustomLineEdit()
         self.setLineEdit(lineEdit)
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
+        self.setStyleSheet("border: 0px")
 
     def setDangerStyle(self):
         self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
 
     def setNormalStyle(self):
         self.setStyleSheet("")
+
+
+class CustomTableWidget(QtWidgets.QTableWidget):
+    def __init__(self, parent=None):
+        super(CustomTableWidget, self).__init__(parent)
+        self.setColumnCount(2)
+        # self.horizontalHeader().setVisible(False)
+        self.verticalHeader().setVisible(False)
+
