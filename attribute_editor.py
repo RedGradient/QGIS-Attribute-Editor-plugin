@@ -230,10 +230,13 @@ class PointTool(QgsMapTool):
                     self.old_attr_values.append(str(item[1]))
 
                 self.combo_list.append(input_widget)
-                self.displayErrorsIfTheyAre(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
+                self.show_invalid_inputs(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
 
                 input_widget.lineEdit().editingFinished.connect(
-                    self.on_editingFinished(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
+                )
+                input_widget.currentIndexChanged.connect(
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
                 )
 
             if meta[item[0]]["type"] == "DirRef":
@@ -253,10 +256,14 @@ class PointTool(QgsMapTool):
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
 
-                self.displayErrorsIfTheyAre(input_widget.lineEdit(), meta[attribute]["choice"] + [""])
+                variants = [input_widget.itemText(i) for i in range(input_widget.count())]
+                self.show_invalid_inputs(input_widget.lineEdit(), variants)
 
                 input_widget.lineEdit().editingFinished.connect(
-                    self.on_editingFinished(input_widget.lineEdit(), meta[attribute]["choice"] + [""])
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
+                )
+                input_widget.currentIndexChanged.connect(
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
                 self.combo_list[-1].currentIndexChanged.connect(self.on_currentIndexChanged(input_widget))
@@ -346,17 +353,17 @@ class PointTool(QgsMapTool):
             return False
         return True
 
-    def displayErrorsIfTheyAre(self, lineEdit, choice):
+    def show_invalid_inputs(self, lineEdit, choice):
         text = lineEdit.text()
-        print(lineEdit.text(), choice)
+        # print(lineEdit.text(), choice)
         if not self.is_correct(text, choice):
             lineEdit.setDangerStyle()
         else:
             lineEdit.setNormalStyle()
 
-    def on_editingFinished(self, lineEdit, choice):
+    def show_invalid_inputs_callback(self, lineEdit, choice):
         def closure():
-            self.displayErrorsIfTheyAre(lineEdit, choice)
+            self.show_invalid_inputs(lineEdit, choice)
         return closure
 
 
