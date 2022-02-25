@@ -329,6 +329,16 @@ class PointTool(QgsMapTool):
 
         return closure
 
+    def is_correct(self, data):
+        pass
+
+    def on_editingFinished(self, lineEdit, data):
+        def closure():
+            if not self.is_correct(data):
+                lineEdit.setDangerStyle()
+            else:
+                lineEdit.setNormalStyle()
+        return closure
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
