@@ -75,6 +75,7 @@ class CustomComboBox(QtWidgets.QComboBox):
         super(CustomComboBox, self).__init__(parent)
         lineEdit = CustomLineEdit()
         self.setLineEdit(lineEdit)
+        self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
 
     def setDangerStyle(self):
         self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")

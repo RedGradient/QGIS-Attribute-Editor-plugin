@@ -21,6 +21,8 @@
  *                                                                         *
  ***************************************************************************/
 """
+from typing import Optional, Any
+
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
@@ -91,7 +93,6 @@ class PointTool(QgsMapTool):
 
         # show dialog with choice of features if there are more than one feature on press point
         if len(pressed_features) > 1:
-            print("dlg show")
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
             for feature in pressed_features:
@@ -183,20 +184,14 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-        # TODO: снятие выделения по нажатию на выделенный объект с нажатым ctrl
+        # TODO: снятие выделения по клику на выделенный объект с нажатым ctrl
         # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
 
         # list of QLineEdit widgets; needs for saving
         self.input_widget_list = []
-
         node = self.get_layer_node(RS.getroot(), self.iface.activeLayer().name())
-
-        # -------------------
         readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
-        meta = self.get_fields_meta(node, {})
-        # -------------------
-
-        # print(meta)
+        meta: dict[str] = self.get_fields_meta(node, {})
 
         # show attributes
         self.combo_list = []
@@ -218,7 +213,6 @@ class PointTool(QgsMapTool):
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
-                input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
                 input_widget.addItem("")
                 input_widget.addItems(meta[item[0]]["choice"])
 
@@ -243,7 +237,6 @@ class PointTool(QgsMapTool):
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
-                input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
                 attribute = meta[item[0]]["fieldRef"]
                 input_widget.addItem("")
                 for code in meta[attribute]["choice"]:
@@ -256,7 +249,7 @@ class PointTool(QgsMapTool):
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
 
-                variants = [input_widget.itemText(i) for i in range(input_widget.count())]
+                variants = [input_widget.itemText(k) for k in range(input_widget.count())]
                 self.show_invalid_inputs(input_widget.lineEdit(), variants)
 
                 input_widget.lineEdit().editingFinished.connect(
@@ -405,8 +398,6 @@ class AttributeEditor:
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
 
-        # load attribute meta info
-
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -533,6 +524,7 @@ class AttributeEditor:
         self.canvas.setMapTool(self.map_tool)
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
+        # self.map_tool.clear_layout(self.dlg.attrBox)
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
         self.map_tool.display_attrs(selected_features)
 
