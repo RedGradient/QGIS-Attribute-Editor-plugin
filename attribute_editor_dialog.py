@@ -48,3 +48,36 @@ class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
         """Constructor."""
         super(FeatureSelectDialog, self).__init__(parent)
         self.setupUi(self)
+
+
+class CustomLineEdit(QtWidgets.QLineEdit):
+    def __init__(self, parent=None):
+        """Constructor"""
+        super(CustomLineEdit, self).__init__(parent)
+        self.setTextMargins(2, 0, 2, 0)
+
+    def setDangerStyle(self):
+        self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
+
+    def setNormalStyle(self):
+        self.setStyleSheet("")
+
+    # def decideWhatToDisplay(self, value):
+    #     if value in ['-', '***']:
+    #         self.lineEdit().setPlaceholderText(str(value))
+    #     else:
+    #         self.lineEdit().setText(str(value))
+
+
+class CustomComboBox(QtWidgets.QComboBox):
+    def __init__(self, parent=None):
+        """Constructor"""
+        super(CustomComboBox, self).__init__(parent)
+        lineEdit = CustomLineEdit()
+        self.setLineEdit(lineEdit)
+
+    def setDangerStyle(self):
+        self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
+
+    def setNormalStyle(self):
+        self.setStyleSheet("")

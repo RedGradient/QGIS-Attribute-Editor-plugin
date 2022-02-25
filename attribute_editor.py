@@ -34,7 +34,7 @@ from qgis._core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog
+from .attribute_editor_dialog import AttributeEditorDialog, FeatureSelectDialog, CustomLineEdit, CustomComboBox
 import os.path
 import xml.etree.ElementTree as ET
 
@@ -205,8 +205,7 @@ class PointTool(QgsMapTool):
             input_widget = QWidget()
 
             if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
-                input_widget = QLineEdit()
-                input_widget.setTextMargins(2, 0, 2, 0)
+                input_widget = CustomLineEdit()
 
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
@@ -216,12 +215,8 @@ class PointTool(QgsMapTool):
                     self.old_attr_values.append(str(item[1]))
 
             if meta[item[0]]["type"] == "Dir":
-                input_widget = QComboBox()
+                input_widget = CustomComboBox()
                 input_widget.setEditable(True)
-
-                lineEdit = QLineEdit()
-                lineEdit.setTextMargins(2, 0, 2, 0)
-                input_widget.setLineEdit(lineEdit)
 
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
                 input_widget.addItem("")
@@ -237,12 +232,8 @@ class PointTool(QgsMapTool):
                 self.combo_list.append(input_widget)
 
             if meta[item[0]]["type"] == "DirRef":
-                input_widget = QComboBox()
+                input_widget = CustomComboBox()
                 input_widget.setEditable(True)
-
-                lineEdit = QLineEdit()
-                lineEdit.setTextMargins(2, 0, 2, 0)
-                input_widget.setLineEdit(lineEdit)
 
                 input_widget.setSizeAdjustPolicy(input_widget.AdjustToMinimumContentsLength)
                 attribute = meta[item[0]]["fieldRef"]
