@@ -230,6 +230,11 @@ class PointTool(QgsMapTool):
                     self.old_attr_values.append(str(item[1]))
 
                 self.combo_list.append(input_widget)
+                self.is_correct(item[1], meta[item[0]]["choice"] + [""])
+
+                input_widget.lineEdit().editingFinished.connect(
+                    self.on_editingFinished(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
+                )
 
             if meta[item[0]]["type"] == "DirRef":
                 input_widget = CustomComboBox()
@@ -247,6 +252,12 @@ class PointTool(QgsMapTool):
                 else:
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
+
+                self.is_correct(item[1], meta[attribute]["choice"] + [""])
+
+                input_widget.lineEdit().editingFinished.connect(
+                    self.on_editingFinished(input_widget.lineEdit(), meta[attribute]["choice"] + [""])
+                )
 
                 self.combo_list[-1].currentIndexChanged.connect(self.on_currentIndexChanged(input_widget))
                 input_widget.currentIndexChanged.connect(self.on_currentIndexChanged(self.combo_list[-1]))
@@ -329,16 +340,23 @@ class PointTool(QgsMapTool):
 
         return closure
 
-    def is_correct(self, data):
-        pass
+    @staticmethod
+    def is_correct(item, choice):
+        if item not in choice:
+            return False
+        return True
 
-    def on_editingFinished(self, lineEdit, data):
+    def on_editingFinished(self, lineEdit, choice):
         def closure():
-            if not self.is_correct(data):
+            text = lineEdit.text()
+            print(lineEdit.text(), choice)
+            if not self.is_correct(text, choice):
                 lineEdit.setDangerStyle()
             else:
                 lineEdit.setNormalStyle()
+
         return closure
+
 
 class AttributeEditor:
     """QGIS Plugin Implementation."""
@@ -506,8 +524,8 @@ class AttributeEditor:
         self.canvas.setMapTool(self.map_tool)
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
-        # selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        # self.map_tool.display_attrs(selected_features)
+        selected_features = list(self.iface.activeLayer().getSelectedFeatures())
+        self.map_tool.display_attrs(selected_features)
 
         # show the dialog
         self.dlg.show()
