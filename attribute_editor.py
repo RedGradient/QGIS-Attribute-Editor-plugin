@@ -230,7 +230,7 @@ class PointTool(QgsMapTool):
                     self.old_attr_values.append(str(item[1]))
 
                 self.combo_list.append(input_widget)
-                self.is_correct(item[1], meta[item[0]]["choice"] + [""])
+                self.displayErrorsIfTheyAre(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
 
                 input_widget.lineEdit().editingFinished.connect(
                     self.on_editingFinished(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
@@ -253,7 +253,7 @@ class PointTool(QgsMapTool):
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
 
-                self.is_correct(item[1], meta[attribute]["choice"] + [""])
+                self.displayErrorsIfTheyAre(input_widget.lineEdit(), meta[attribute]["choice"] + [""])
 
                 input_widget.lineEdit().editingFinished.connect(
                     self.on_editingFinished(input_widget.lineEdit(), meta[attribute]["choice"] + [""])
@@ -346,15 +346,17 @@ class PointTool(QgsMapTool):
             return False
         return True
 
+    def displayErrorsIfTheyAre(self, lineEdit, choice):
+        text = lineEdit.text()
+        print(lineEdit.text(), choice)
+        if not self.is_correct(text, choice):
+            lineEdit.setDangerStyle()
+        else:
+            lineEdit.setNormalStyle()
+
     def on_editingFinished(self, lineEdit, choice):
         def closure():
-            text = lineEdit.text()
-            print(lineEdit.text(), choice)
-            if not self.is_correct(text, choice):
-                lineEdit.setDangerStyle()
-            else:
-                lineEdit.setNormalStyle()
-
+            self.displayErrorsIfTheyAre(lineEdit, choice)
         return closure
 
 
