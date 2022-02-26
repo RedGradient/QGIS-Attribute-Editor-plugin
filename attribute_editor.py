@@ -28,7 +28,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
-    QPushButton, QComboBox, QWidget
+    QPushButton, QComboBox, QWidget, QSpacerItem
 from qgis.gui import QgsMapTool
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
@@ -46,13 +46,13 @@ RS = ET.parse(os.path.dirname(__file__) + '/RS data/RS.mixml')
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas):
-        self.input_widget_list = []
         self.parent = parent
         self.iface = iface
         self.old_attr_values = []
-
+        self.input_widget_list = []  # needs for saving
         self.first_start = True
         self.selected_features = []
+        self.changed_inputs = []
 
         self.ctrl_pressed = False
 
@@ -82,16 +82,18 @@ class PointTool(QgsMapTool):
         # self.clear_layout(self.parent.attrBox)
         self.parent.table.setRowCount(0)
         self.old_attr_values = []
+        self.input_widget_list = []
+        self.changed_inputs = []
 
         # support selection with ctrl
         if not self.ctrl_pressed:
             layer.removeSelection()
             self.selected_features = []
-            if len(pressed_features) == 0:
-                # self.clear_layout(self.parent.attrBox)
-                self.parent.table.setRowCount(0)
-                self.input_widget_list = []
-                return None
+            # if len(pressed_features) == 0:
+            #     # self.clear_layout(self.parent.attrBox)
+            #     self.parent.table.setRowCount(0)
+            #     self.input_widget_list = []
+            #     return None
 
         # show dialog with choice of features if there are more than one feature on press point
         if len(pressed_features) > 1:
@@ -112,6 +114,11 @@ class PointTool(QgsMapTool):
             self.selected_features.append(feature)
 
         self.display_attrs(self.selected_features)
+
+        if len(self.selected_features) == 0:
+            self.parent.saveBtn.setEnabled(False)
+        else:
+            self.parent.saveBtn.setEnabled(True)
 
     @staticmethod
     def get_layer_node(root, layer_name):
@@ -162,7 +169,7 @@ class PointTool(QgsMapTool):
     def display_attrs(self, features):
         """Takes feature list and display their attributes"""
 
-
+        self.parent.saveBtn.setEnabled(False)
 
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
@@ -177,8 +184,9 @@ class PointTool(QgsMapTool):
                 else:
                     data[item[0]] = [item[1]]
 
-        # если значение атрибута одинаково для всех features, то данное значение показывается
-        # если значение атрибута неодинаково для всех features, то напротив атрибута вместо зачения выводится '***'
+        # атрибут одинаковый для всех features => значение показывается
+        # атрибуты разные для всех features => выводится '***'
+        # атрибут пустой => выводится '-'
         for key in data:
             distinct_attrs = set(data[key])
             if len(distinct_attrs) > 1:
@@ -188,21 +196,16 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-        # TODO: снятие выделения по клику на выделенный объект с нажатым ctrl
-        # TODO: после закрытия окна активный инструмент меняется на инструмент перемещения (иконка руки). Искать по запросу: "pyqgis activate tool"
-
         self.parent.table.setRowCount(len(data))
 
-        # list of QLineEdit widgets; needs for saving
-        self.input_widget_list = []
         node = self.get_layer_node(RS.getroot(), self.iface.activeLayer().name())
         readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         meta: dict[str] = self.get_fields_meta(node, {})
 
         # show attributes
-        self.combo_list = []
+        self.combo_box_list = []
         for i, item in enumerate(data.items()):
-            label = QLabel(item[0])
+            label = CustomLabel(item[0])
             input_widget = QWidget()
 
             if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
@@ -210,9 +213,12 @@ class PointTool(QgsMapTool):
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
+                    input_widget.old_text = ''
                 else:
                     input_widget.setText(item[1])
                     self.old_attr_values.append(str(item[1]))
+                    input_widget.old_text = item[1]
+                input_widget.textEdited.connect(self.on_textEdited(input_widget))
 
             if meta[item[0]]["type"] == "Dir":
                 input_widget = CustomComboBox()
@@ -224,14 +230,16 @@ class PointTool(QgsMapTool):
                 if item[1] in ['-', '***']:
                     input_widget.lineEdit().setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
+                    input_widget.old_text = ''
                 else:
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
+                    input_widget.old_text = item[1]
 
-                self.combo_list.append(input_widget)
+                self.combo_box_list.append(input_widget)
                 self.show_invalid_inputs(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
-
-                input_widget.lineEdit().editingFinished.connect(
+                input_widget.lineEdit().textEdited.connect(self.on_textEdited(input_widget.lineEdit()))
+                input_widget.lineEdit().textEdited.connect(
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), meta[item[0]]["choice"] + [""])
                 )
                 input_widget.currentIndexChanged.connect(
@@ -250,31 +258,51 @@ class PointTool(QgsMapTool):
                 if item[1] in ['-', '***']:
                     input_widget.lineEdit().setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
+                    input_widget.old_text = ''
                 else:
                     input_widget.lineEdit().setText(item[1])
                     self.old_attr_values.append(str(item[1]))
+                    input_widget.old_text = item[1]
 
                 variants = [input_widget.itemText(k) for k in range(input_widget.count())]
                 self.show_invalid_inputs(input_widget.lineEdit(), variants)
 
-                input_widget.lineEdit().editingFinished.connect(
+                # set event handlers
+                input_widget.lineEdit().textEdited.connect(self.on_textEdited(input_widget.lineEdit()))
+                input_widget.lineEdit().textEdited.connect(
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
                 input_widget.currentIndexChanged.connect(
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
-                self.combo_list[-1].currentIndexChanged.connect(self.on_currentIndexChanged(input_widget))
-                input_widget.currentIndexChanged.connect(self.on_currentIndexChanged(self.combo_list[-1]))
+                self.combo_box_list[-1].currentIndexChanged.connect(
+                    self.on_currentIndexChanged(self.combo_box_list[-1], input_widget)
+                )
+                input_widget.currentIndexChanged.connect(
+                    self.on_currentIndexChanged(input_widget, self.combo_box_list[-1])
+                )
 
+            input_widget.label = label
             self.input_widget_list.append(input_widget)
-            # hbox = QHBoxLayout()
-            # hbox.insertWidget(-1, label)
-            # hbox.insertWidget(-1, input_widget)
-            # self.parent.attrBox.insertLayout(-1, hbox)
             self.parent.table.setRowHeight(i, 4)
             self.parent.table.setCellWidget(i, 0, label)
             self.parent.table.setCellWidget(i, 1, input_widget)
+
+    def on_textEdited(self, lineEdit):
+        def closure():
+            if lineEdit.old_text != lineEdit.text():
+                lineEdit.label.setChanged(True)
+                self.parent.saveBtn.setEnabled(True)
+                self.changed_inputs.append(lineEdit)
+            else:
+                lineEdit.label.setChanged(False)
+                self.changed_inputs.remove(lineEdit)
+                if lineEdit in self.changed_inputs:
+                    self.changed_inputs.remove(lineEdit)
+                if len(self.changed_inputs) == 0:
+                    self.parent.saveBtn.setEnabled(False)
+        return closure
 
     def get_readable_name(self, node, acc):
         """Takes xml node and returns all <name>.text from it"""
@@ -315,12 +343,14 @@ class PointTool(QgsMapTool):
         return accum
 
     @staticmethod
-    def get_changed_attrs(attr_values):
+    def get_changed_attrs(old_attrs, new_attrs):
         """Gets changed attributes"""
         result = {}
-        for i, value in enumerate(attr_values):
-            if value[0] != value[1]:
-                result[i] = value[1]
+        index = -1
+        for old, new in zip(old_attrs, new_attrs):
+            index += 1
+            if old != new:
+                result[index] = new
         return result
 
     def on_saveBtn_clicked(self):
@@ -328,24 +358,35 @@ class PointTool(QgsMapTool):
         if len(self.input_widget_list) == 0:
             return None
 
-        widget_attr_values = []
+        current_attr_values = []
         for widget in self.input_widget_list:
-            if type(widget) == QLineEdit:
-                widget_attr_values.append(widget.text())
-            elif type(widget) == QComboBox:
-                widget_attr_values.append(widget.currentText())
+            if type(widget) == CustomLineEdit:
+                current_attr_values.append(widget.text())
+            elif type(widget) == CustomComboBox:
+                current_attr_values.append(widget.currentText())
 
-        new_attr_values = self.get_changed_attrs(tuple(zip(self.old_attr_values, widget_attr_values)))
+        new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
         self.iface.activeLayer().startEditing()
         for feature in self.selected_features:
             for attr in new_attr_values.items():
                 self.iface.activeLayer().changeAttributeValue(feature.id(), attr[0], attr[1])
         self.iface.activeLayer().commitChanges()
+        self.parent.saveBtn.setEnabled(False)
+        print("saved")
 
-    def on_currentIndexChanged(self, combo_box):
+    def on_currentIndexChanged(self, combo_box, other_combo_box):
         def closure(index):
-            combo_box.setCurrentIndex(index)
-
+            other_combo_box.setCurrentIndex(index)
+            if combo_box.old_text != combo_box.currentText():
+                combo_box.label.setChanged(True)
+                self.parent.saveBtn.setEnabled(True)
+                self.changed_inputs.append(combo_box)
+            else:
+                combo_box.label.setChanged(False)
+                if combo_box in self.changed_inputs:
+                    self.changed_inputs.remove(combo_box)
+                if len(self.changed_inputs) == 0:
+                    self.parent.saveBtn.setEnabled(False)
         return closure
 
     @staticmethod
@@ -533,6 +574,9 @@ class AttributeEditor:
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
         # self.map_tool.clear_layout(self.dlg.attrBox)
+        self.dlg.table.setRowCount(0)
+        self.map_tool.old_attr_values = []
+        self.map_tool.input_widget_list = []
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
         self.map_tool.display_attrs(selected_features)
 
