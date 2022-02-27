@@ -26,6 +26,7 @@ import os
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
+
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'attribute_editor_dialog_base.ui'))
@@ -48,12 +49,15 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.vbox.insertWidget(-1, self.saveBtn)
 
         hbox = QtWidgets.QHBoxLayout()
-        self.goto_left = QtWidgets.QPushButton("<-")
-        self.goto_left.setEnabled(False)
-        self.goto_right = QtWidgets.QPushButton("->")
-        self.goto_right.setEnabled(False)
-        hbox.insertWidget(-1, self.goto_left)
-        hbox.insertWidget(-1, self.goto_right)
+        self.gotoLeft = QtWidgets.QPushButton("<-")
+        self.gotoLeft.setEnabled(False)
+        self.gotoRight = QtWidgets.QPushButton("->")
+        self.gotoRight.setEnabled(False)
+        self.resetChangesBtn = QtWidgets.QPushButton("Сбросить изменения")
+        self.resetChangesBtn.setEnabled(False)
+        hbox.insertWidget(-1, self.gotoLeft)
+        hbox.insertWidget(-1, self.gotoRight)
+        hbox.insertWidget(-1, self.resetChangesBtn)
 
         self.vbox.insertLayout(1, hbox)
 
@@ -65,24 +69,24 @@ FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Constructor."""
         super(FeatureSelectDialog, self).__init__(parent)
         self.setupUi(self)
 
 
 class CustomLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Constructor"""
         super(CustomLineEdit, self).__init__(parent)
         self.setTextMargins(2, 0, 2, 0)
         self.setStyleSheet("border: 0px")
-        self.setMinimumWidth(100)
+        # self.setMinimumWidth(100)
 
-    def setDangerStyle(self):
+    def setDangerStyle(self) -> None:
         self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
 
-    def setNormalStyle(self):
+    def setNormalStyle(self) -> None:
         self.setStyleSheet("")
 
     # def decideWhatToDisplay(self, value):
@@ -93,42 +97,44 @@ class CustomLineEdit(QtWidgets.QLineEdit):
 
 
 class CustomComboBox(QtWidgets.QComboBox):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Constructor"""
         super(CustomComboBox, self).__init__(parent)
         lineEdit = CustomLineEdit()
         self.setLineEdit(lineEdit)
-        self.setMinimumWidth(100)
         self.setEditable(True)
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
-        self.setStyleSheet("border: 0px")
+        self.setStyleSheet("QComboBox { border: 0px }")
+        # "QComboBox QAbstractItemView { background-color: rgb(248, 248, 255) }"
+        # self.setStyleSheet("border: 0px; QComboBox QAbstractItemView {border: 2px solid red;}")
 
-    def setDangerStyle(self):
+    def setDangerStyle(self) -> None:
         self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
 
-    def setNormalStyle(self):
+    def setNormalStyle(self) -> None:
         self.setStyleSheet("")
 
 
 class CustomTableWidget(QtWidgets.QTableWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super(CustomTableWidget, self).__init__(parent)
         # self.resizeEvent = self.onResize
+
         self.setColumnCount(2)
         self.horizontalHeader().setStretchLastSection(True)
         self.setHorizontalHeaderLabels(["Атрибут", "Значение"])
         # self.setColumnWidth(1, self.geometry().width() - 2 * self.columnWidth(0))
         # self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
-        self.setStyleSheet("background-color: rgb(248, 248, 255)")
+        # self.setStyleSheet("background-color: rgb(248, 248, 255)")
 
 
 class CustomLabel(QtWidgets.QLabel):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super(CustomLabel, self).__init__(parent)
         self.setStyleSheet("padding-left: 10px")
 
-    def setChanged(self, changed):
+    def setChanged(self, changed) -> None:
         if changed:
             self.setStyleSheet("padding-left: 10px; font-weight: bold;")
         else:
@@ -136,10 +142,10 @@ class CustomLabel(QtWidgets.QLabel):
 
 
 class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super(CustomTableWidgetItem, self).__init__(parent)
 
-    def setChanged(self, changed):
+    def setChanged(self, changed) -> None:
         # if changed:
         #     self.setStyleSheet("padding-left: 10px; font-weight: bold;")
         # else:
