@@ -99,6 +99,7 @@ class CustomComboBox(QtWidgets.QComboBox):
         lineEdit = CustomLineEdit()
         self.setLineEdit(lineEdit)
         self.setMinimumWidth(100)
+        self.setEditable(True)
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
         self.setStyleSheet("border: 0px")
 
@@ -116,13 +117,10 @@ class CustomTableWidget(QtWidgets.QTableWidget):
         self.setColumnCount(2)
         self.horizontalHeader().setStretchLastSection(True)
         self.setHorizontalHeaderLabels(["Атрибут", "Значение"])
-        self.setColumnWidth(1, self.geometry().width() - 2 * self.columnWidth(0))
+        # self.setColumnWidth(1, self.geometry().width() - 2 * self.columnWidth(0))
         # self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
-        # self.setStyleSheet("background-color: rgb(211, 211, 211)")
-
-    def onResize(self, event):
-        print(event.size())
+        self.setStyleSheet("background-color: rgb(248, 248, 255)")
 
 
 class CustomLabel(QtWidgets.QLabel):
