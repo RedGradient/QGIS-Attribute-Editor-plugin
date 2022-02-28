@@ -604,6 +604,7 @@ class AttributeEditor:
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
+        action.setCheckable(True)
 
         if status_tip is not None:
             action.setStatusTip(status_tip)
@@ -675,6 +676,8 @@ class AttributeEditor:
         # if layer has not geometry
         if layer.wkbType() == 100:
             return
+
+        map(lambda a: a.setChecked(True), self.actions)
 
         self.switch_dlg.table.setRowCount(0)
         self.map_tool.old_attr_values = []
