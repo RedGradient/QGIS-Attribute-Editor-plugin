@@ -231,8 +231,14 @@ class PointTool(QgsMapTool):
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
-                variants = [""] + meta[item[0]]["choice"]
-                input_widget.addItems(variants)
+                attribute = item[0]
+
+                variants = [""]
+                input_widget.addItems([""])
+                for code in meta[attribute]["choice_fullcode"]:
+                    rv = readable_values[code]["code"]
+                    input_widget.addItem(rv)
+                    variants.append(rv)
 
                 if item[1] in ['-', '***']:
                     input_widget.lineEdit().setPlaceholderText(str(item[1]))
@@ -266,8 +272,8 @@ class PointTool(QgsMapTool):
 
                 variants = [""]
                 input_widget.addItem("")
-                for code in meta[attribute]["choice"]:
-                    rv = readable_values[code]
+                for code in meta[attribute]["choice_fullcode"]:
+                    rv = readable_values[code]["text"]
                     input_widget.addItem(rv)
                     variants.append(rv)
 
@@ -365,7 +371,7 @@ class PointTool(QgsMapTool):
                 self.get_readable_name(i, acc)
                 continue
             if i.tag == "name":
-                acc.update({node.attrib["FullCode"]: i.text})
+                acc.update({node.attrib["FullCode"]: {"text": i.text, "code": node.attrib["code"]}})
                 continue
         return acc
 
@@ -386,7 +392,7 @@ class PointTool(QgsMapTool):
                 values = []
                 for val in i[0]:
                     values.append(val.text)
-                accum[list(accum.keys())[-1]].update({"type": "Dir", "choice": values})
+                accum[list(accum.keys())[-1]].update({"type": "Dir", "choice_fullcode": values})
                 return None
             if i.tag == "DirValue":
                 accum[list(accum.keys())[-1]].update({"type": "DirRef", "fieldRef": i[0].attrib.get("name")})
