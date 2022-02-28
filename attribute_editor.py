@@ -348,7 +348,7 @@ class PointTool(QgsMapTool):
             if lineEdit.old_text != lineEdit.text():
                 lineEdit.label.setChanged(True)
                 self.parent.saveBtn.setEnabled(True)
-                self.parent.resetChangesBtn.setEnabled(True)
+                # self.parent.resetChangesBtn.setEnabled(True)
                 if lineEdit not in self.changed_inputs:
                     self.changed_inputs.append(lineEdit)
             else:
@@ -357,7 +357,7 @@ class PointTool(QgsMapTool):
                     self.changed_inputs.remove(lineEdit)
                 if len(self.changed_inputs) == 0:
                     self.parent.saveBtn.setEnabled(False)
-                    self.parent.resetChangesBtn.setEnabled(False)
+                    # self.parent.resetChangesBtn.setEnabled(False)
 
         return closure
 
@@ -433,7 +433,7 @@ class PointTool(QgsMapTool):
         self.iface.activeLayer().commitChanges()
 
         self.parent.saveBtn.setEnabled(False)
-        self.parent.resetChangesBtn.setEnabled(False)
+        # self.parent.resetChangesBtn.setEnabled(False)
         print("saved")
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
@@ -443,7 +443,7 @@ class PointTool(QgsMapTool):
             if combo_box.old_text != combo_box.currentText():
                 combo_box.label.setChanged(True)
                 self.parent.saveBtn.setEnabled(True)
-                self.parent.resetChangesBtn.setEnabled(True)
+                # self.parent.resetChangesBtn.setEnabled(True)
                 if combo_box not in self.changed_inputs:
                     self.changed_inputs.append(combo_box)
             else:
@@ -452,7 +452,7 @@ class PointTool(QgsMapTool):
                     self.changed_inputs.remove(combo_box)
                 if len(self.changed_inputs) == 0:
                     self.parent.saveBtn.setEnabled(False)
-                    self.parent.resetChangesBtn.setEnabled(False)
+                    # self.parent.resetChangesBtn.setEnabled(False)
         return closure
 
     def on_resetChangesBtn_clicked(self) -> None:
@@ -532,7 +532,8 @@ class AttributeEditor:
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
-        self.first_start = None
+        self.mult_editor_first_start = None
+        self.switch_editor_first_start = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -630,20 +631,21 @@ class AttributeEditor:
 
         self.add_action(
             icon_path,
-            text=self.tr(u'Редактор атрибутов'),
+            text=self.tr(u'Множ. и одинар. редактирование'),
             callback=self.run,
             parent=self.iface.mainWindow()
         )
 
         self.add_action(
             icon_path,
-            text="Показ Оверлеев",
+            text="Перечисление наложенных объектов",
             callback=self.run_overlay,
             parent=self.iface.mainWindow()
         )
 
         # will be set False in run()
-        self.first_start = True
+        self.mult_editor_first_start = True
+        self.switch_editor_first_start = True
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -654,15 +656,44 @@ class AttributeEditor:
             self.iface.removeToolBarIcon(action)
 
     def run_overlay(self):
-        pass
+        if self.switch_editor_first_start == True:
+            self.switch_editor_first_start == False
+            self.switch_dlg = AttributeEditorSwitchDialog()
+
+            # установка "always on top" (не работает в Linux)
+            self.switch_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+
+            self.map_tool = PointTool(self.switch_dlg, self.iface, self.canvas)
+
+        self.canvas.setMapTool(self.map_tool)
+
+        layer = self.iface.activeLayer()
+
+        if layer is None:
+            return
+
+        # if layer has not geometry
+        if layer.wkbType() == 100:
+            return
+
+        self.switch_dlg.table.setRowCount(0)
+        self.map_tool.old_attr_values = []
+        self.map_tool.input_widget_list = []
+        selected_features = list(self.iface.activeLayer().getSelectedFeatures())
+        self.map_tool.display_attrs(selected_features)
+
+        # show the dialog
+        self.switch_dlg.show()
+
+        result = self.switch_dlg.exec_()
 
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
+        if self.mult_editor_first_start == True:
+            self.mult_editor_first_start = False
             self.dlg = AttributeEditorDialog()
 
             # установка "always on top" (не работает в Linux)
@@ -672,22 +703,21 @@ class AttributeEditor:
 
         self.canvas.setMapTool(self.map_tool)
 
-        # self.map_tool.clear_layout(self.dlg.attrBox)
-
         layer = self.iface.activeLayer()
 
         if layer is None:
-            return None
+            return
+
+        # if layer has not geometry
+        if layer.wkbType() == 100:
+            return
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
-        # if layer.wkbType() != 100:
         self.dlg.table.setRowCount(0)
         self.map_tool.old_attr_values = []
         self.map_tool.input_widget_list = []
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
         self.map_tool.display_attrs(selected_features)
-        # else:
-        #     pass
 
         # show the dialog
         self.dlg.show()
