@@ -53,6 +53,9 @@ class PointTool(QgsMapTool):
         self.first_start = True
         self.selected_features = []
         self.changed_inputs = []
+        self.combo_box_list = []
+
+        self.mult_press_data = {"pressed_list": [], "current_index": -1}
 
         self.ctrl_pressed = False
 
@@ -60,6 +63,10 @@ class PointTool(QgsMapTool):
         if self.first_start:
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
+
+            self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
+            self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
+
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
@@ -93,10 +100,12 @@ class PointTool(QgsMapTool):
                 # self.clear_layout(self.parent.attrBox)
                 # self.parent.table.setRowCount(0)
                 self.input_widget_list = []
-                return None
+                return
 
         # show dialog with choice of features if there are more than one feature on press point
         if len(pressed_features) > 1:
+            print(pressed_features)
+            self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
             for feature in pressed_features:
@@ -106,7 +115,7 @@ class PointTool(QgsMapTool):
                 self.feat_select_dlg.featBox.insertWidget(-1, btn)
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
-            return None
+            return
 
         # select pressed features on the layer
         for feature in pressed_features:
@@ -126,7 +135,11 @@ class PointTool(QgsMapTool):
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
         def closure():
-            self.display_attrs([feature])
+            self.display_attrs([feature], switch=True)
+
+            self.parent.gotoRight.setEnabled(True)
+            self.parent.gotoLeft.setEnabled(True)
+
             self.iface.activeLayer().select(feature.id())
             self.feat_select_dlg.reject()
 
@@ -161,7 +174,7 @@ class PointTool(QgsMapTool):
                 else:
                     self.clear_layout(item.layout())
 
-    def display_attrs(self, features) -> None:
+    def display_attrs(self, features: List, switch: bool = False) -> None:
         """Takes feature list and display their attributes"""
 
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
@@ -301,6 +314,28 @@ class PointTool(QgsMapTool):
         self.parent.saveBtn.setEnabled(False)
         self.parent.resetChangesBtn.setEnabled(False)
 
+        if not switch:
+            self.parent.gotoRight.setEnabled(False)
+            self.parent.gotoLeft.setEnabled(False)
+
+    def on_gotoRight_click(self):
+        index = self.mult_press_data["current_index"] + 1
+        print("Right", "index:", index, self.mult_press_data["pressed_list"])
+        if index > len(self.mult_press_data["pressed_list"]) - 1:
+            print("return")
+            return
+        self.mult_press_data["current_index"] += 1
+        self.display_attrs([self.mult_press_data["pressed_list"][index]], switch=True)
+
+    def on_gotoLeft_click(self):
+        index = self.mult_press_data["current_index"] - 1
+        print("Left", "index:", index, self.mult_press_data["pressed_list"])
+        if index < 0:
+            print("return")
+            return
+        self.mult_press_data["current_index"] -= 1
+        self.display_attrs([self.mult_press_data["pressed_list"][index]], switch=True)
+
     def on_textChanged(self, lineEdit: QLineEdit) -> Callable:
         def closure():
             print("on_textChanged")
@@ -372,7 +407,7 @@ class PointTool(QgsMapTool):
     def on_saveBtn_clicked(self) -> None:
         """Saves changed attributes"""
         if not self.input_widget_list:
-            return None
+            return
 
         current_attr_values = []
         print("Длина списка с виджетами -", len(self.input_widget_list))
@@ -621,27 +656,33 @@ class AttributeEditor:
 
         # self.map_tool.clear_layout(self.dlg.attrBox)
 
-        if self.iface.activeLayer() is None:
+        layer = self.iface.activeLayer()
+
+        if layer is None:
             return None
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
+        # if layer.wkbType() != 100:
         self.dlg.table.setRowCount(0)
         self.map_tool.old_attr_values = []
         self.map_tool.input_widget_list = []
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
         self.map_tool.display_attrs(selected_features)
+        # else:
+        #     pass
 
         # show the dialog
         self.dlg.show()
 
         # Run the dialog event loop
         result = self.dlg.exec_()
+
         # See if OK was pressed
-        if result:
-            print("OK")
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+        # if result:
+        #     print("OK")
+        #     # Do something useful here - delete the line containing pass and
+        #     # substitute with your code.
+        #     pass
 
     # def set_map_tool(self):
     #     self.canvas.setMapTool(self.map_tool)

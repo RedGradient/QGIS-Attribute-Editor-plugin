@@ -39,7 +39,6 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         # self.setupUi(self)
 
         self.setGeometry(0, 0, 500, 600)
-
         self.vbox = QtWidgets.QVBoxLayout()
 
         self.table = CustomTableWidget()
