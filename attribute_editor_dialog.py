@@ -47,20 +47,33 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.vbox.insertWidget(-1, self.table)
         self.vbox.insertWidget(-1, self.saveBtn)
 
-        hbox = QtWidgets.QHBoxLayout()
+        self.hbox = QtWidgets.QHBoxLayout()
+
+
+
+        # self.resetChangesBtn = QtWidgets.QPushButton("Сбросить изменения")
+        # self.resetChangesBtn.setEnabled(False)
+
+        # self.hbox.insertWidget(-1, self.resetChangesBtn)
+
+        self.vbox.insertLayout(1, self.hbox)
+
+        self.setLayout(self.vbox)
+
+
+class AttributeEditorSwitchDialog(AttributeEditorDialog):
+    def __init__(self, parent=None):
+        super(AttributeEditorSwitchDialog, self).__init__(parent)
+
         self.gotoLeft = QtWidgets.QPushButton("<-")
         self.gotoLeft.setEnabled(False)
         self.gotoRight = QtWidgets.QPushButton("->")
         self.gotoRight.setEnabled(False)
-        self.resetChangesBtn = QtWidgets.QPushButton("Сбросить изменения")
-        self.resetChangesBtn.setEnabled(False)
-        hbox.insertWidget(-1, self.gotoLeft)
-        hbox.insertWidget(-1, self.gotoRight)
-        hbox.insertWidget(-1, self.resetChangesBtn)
 
-        self.vbox.insertLayout(1, hbox)
+        self.hbox.insertWidget(-1, self.gotoLeft)
+        self.hbox.insertWidget(-1, self.gotoRight)
 
-        self.setLayout(self.vbox)
+        self.vbox.insertLayout(-1, self.hbox)
 
 
 FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(

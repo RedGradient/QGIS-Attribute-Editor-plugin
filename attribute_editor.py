@@ -62,10 +62,10 @@ class PointTool(QgsMapTool):
         # set callback at first start
         if self.first_start:
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
-            self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
+            # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
 
-            self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
-            self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
+            # self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
+            # self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
 
             self.first_start = False
 
@@ -318,11 +318,11 @@ class PointTool(QgsMapTool):
             self.parent.table.setCellWidget(i, 1, input_widget)
 
         self.parent.saveBtn.setEnabled(False)
-        self.parent.resetChangesBtn.setEnabled(False)
-
-        if not switch:
-            self.parent.gotoRight.setEnabled(False)
-            self.parent.gotoLeft.setEnabled(False)
+        # self.parent.resetChangesBtn.setEnabled(False)
+        #
+        # if not switch:
+        #     self.parent.gotoRight.setEnabled(False)
+        #     self.parent.gotoLeft.setEnabled(False)
 
     def on_gotoRight_click(self):
         index = self.mult_press_data["current_index"] + 1
@@ -627,11 +627,20 @@ class AttributeEditor:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ':/plugins/attribute_editor/icon.png'
+
         self.add_action(
             icon_path,
             text=self.tr(u'Редактор атрибутов'),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow()
+        )
+
+        self.add_action(
+            icon_path,
+            text="Показ Оверлеев",
+            callback=self.run_overlay,
+            parent=self.iface.mainWindow()
+        )
 
         # will be set False in run()
         self.first_start = True
@@ -643,6 +652,9 @@ class AttributeEditor:
                 self.tr(u'&Редактор атрибутов'),
                 action)
             self.iface.removeToolBarIcon(action)
+
+    def run_overlay(self):
+        pass
 
     def run(self):
         """Run method that performs all the real work"""
