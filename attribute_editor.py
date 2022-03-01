@@ -54,6 +54,7 @@ class PointTool(QgsMapTool):
         self.selected_features = []
         self.changed_inputs = []
         self.combo_box_list = []
+        self.mode = None  # "normal" or "switch"
 
         self.mult_press_data = {"pressed_list": [], "current_index": -1}
 
@@ -64,8 +65,9 @@ class PointTool(QgsMapTool):
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
 
-            # self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
-            # self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
+            if self.mode == "switch":
+                self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
+                self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
 
             self.first_start = False
 
@@ -75,11 +77,13 @@ class PointTool(QgsMapTool):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
             self.ctrl_pressed = True
+            self.parent.ctrl_status.setText("CTRL нажат")
 
     def keyReleaseEvent(self, event):
         # if event.modifiers() & Qt.ControlModifier:
         if event.key() == Qt.Key_Control:
             self.ctrl_pressed = False
+            self.parent.ctrl_status.setText("CTRL не нажат")
 
     def canvasReleaseEvent(self, event):
         point = QgsGeometry.fromPointXY(event.mapPoint())
@@ -87,7 +91,6 @@ class PointTool(QgsMapTool):
         layer = self.iface.activeLayer()
 
         # these should be removed anyway
-        # self.clear_layout(self.parent.attrBox)
         self.parent.table.setRowCount(0)
         self.old_attr_values = []
         self.changed_inputs = []
@@ -97,14 +100,13 @@ class PointTool(QgsMapTool):
             layer.removeSelection()
             self.selected_features = []
             if len(pressed_features) == 0:
-                # self.clear_layout(self.parent.attrBox)
-                # self.parent.table.setRowCount(0)
+                self.parent.table.setRowCount(0)
                 self.input_widget_list = []
                 return
 
         # show dialog with choice of features if there are more than one feature on press point
+        print(self.mode)
         if len(pressed_features) > 1:
-            print(pressed_features)
             self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
@@ -113,9 +115,14 @@ class PointTool(QgsMapTool):
                 btn.setText(str(feature.attributes()[0]))
                 btn.clicked.connect(self.on_select_feat_btn_clicked(feature))
                 self.feat_select_dlg.featBox.insertWidget(-1, btn)
+
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
             return
+
+        if len(pressed_features) < 2:
+            if self.mode == "switch":
+                return
 
         # select pressed features on the layer
         for feature in pressed_features:
@@ -135,11 +142,7 @@ class PointTool(QgsMapTool):
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
         def closure():
-            self.display_attrs([feature], switch=True)
-
-            self.parent.gotoRight.setEnabled(True)
-            self.parent.gotoLeft.setEnabled(True)
-
+            self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
             self.feat_select_dlg.reject()
 
@@ -174,7 +177,7 @@ class PointTool(QgsMapTool):
                 else:
                     self.clear_layout(item.layout())
 
-    def display_attrs(self, features: List, switch: bool = False) -> None:
+    def display_attrs(self, features: List) -> None:
         """Takes feature list and display their attributes"""
 
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
@@ -319,10 +322,6 @@ class PointTool(QgsMapTool):
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
-        #
-        # if not switch:
-        #     self.parent.gotoRight.setEnabled(False)
-        #     self.parent.gotoLeft.setEnabled(False)
 
     def on_gotoRight_click(self):
         index = self.mult_press_data["current_index"] + 1
@@ -331,7 +330,7 @@ class PointTool(QgsMapTool):
             print("return")
             return
         self.mult_press_data["current_index"] += 1
-        self.display_attrs([self.mult_press_data["pressed_list"][index]], switch=True)
+        self.display_attrs([self.mult_press_data["pressed_list"][index]])
 
     def on_gotoLeft_click(self):
         index = self.mult_press_data["current_index"] - 1
@@ -340,7 +339,7 @@ class PointTool(QgsMapTool):
             print("return")
             return
         self.mult_press_data["current_index"] -= 1
-        self.display_attrs([self.mult_press_data["pressed_list"][index]], switch=True)
+        self.display_attrs([self.mult_press_data["pressed_list"][index]])
 
     def on_textChanged(self, lineEdit: QLineEdit) -> Callable:
         def closure():
@@ -535,6 +534,9 @@ class AttributeEditor:
         self.mult_editor_first_start = None
         self.switch_editor_first_start = None
 
+        self.switch_pressed = False
+        self.normal_pressed = False
+
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -658,15 +660,23 @@ class AttributeEditor:
 
     def run_overlay(self):
         if self.switch_editor_first_start == True:
-            self.switch_editor_first_start == False
+            self.switch_editor_first_start = False
             self.switch_dlg = AttributeEditorSwitchDialog()
-
             # установка "always on top" (не работает в Linux)
             self.switch_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
-            self.map_tool = PointTool(self.switch_dlg, self.iface, self.canvas)
+        # close dialog if opened (pressed)
+        if self.switch_pressed:
+            if self.switch_dlg.isVisible():
+                self.switch_dlg.reject()
+                self.switch_pressed = False
+                return
+        self.switch_pressed = True
 
-        self.canvas.setMapTool(self.map_tool)
+        # preparing
+        self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas)
+        self.switch_map_tool.mode = "switch"
+        self.canvas.setMapTool(self.switch_map_tool)
 
         layer = self.iface.activeLayer()
 
@@ -677,18 +687,20 @@ class AttributeEditor:
         if layer.wkbType() == 100:
             return
 
-        map(lambda a: a.setChecked(True), self.actions)
+        # map(lambda a: a.setChecked(True), self.actions)
 
         self.switch_dlg.table.setRowCount(0)
-        self.map_tool.old_attr_values = []
-        self.map_tool.input_widget_list = []
+        self.switch_map_tool.old_attr_values = []
+        self.switch_map_tool.input_widget_list = []
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        self.map_tool.display_attrs(selected_features)
+        self.switch_map_tool.display_attrs(selected_features)
 
         # show the dialog
         self.switch_dlg.show()
 
         result = self.switch_dlg.exec_()
+        if result == 0:
+            self.actions[1].setChecked(False)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -697,43 +709,47 @@ class AttributeEditor:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.mult_editor_first_start == True:
             self.mult_editor_first_start = False
-            self.dlg = AttributeEditorDialog()
-
+            self.normal_dlg = AttributeEditorDialog()
             # установка "always on top" (не работает в Linux)
-            self.dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+            self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
-            self.map_tool = PointTool(self.dlg, self.iface, self.canvas)
+        if self.normal_pressed:
+            if self.normal_dlg.isVisible():
+                self.normal_dlg.reject()
+                self.normal_pressed = False
+                return
+        self.normal_pressed = True
 
-        self.canvas.setMapTool(self.map_tool)
-
+        self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas)
+        self.normal_map_tool.mode = "normal"
+        self.canvas.setMapTool(self.normal_map_tool)
         layer = self.iface.activeLayer()
 
         if layer is None:
             return
-
         # if layer has not geometry
         if layer.wkbType() == 100:
             return
 
-        # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
-        self.dlg.table.setRowCount(0)
-        self.map_tool.old_attr_values = []
-        self.map_tool.input_widget_list = []
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        self.map_tool.display_attrs(selected_features)
+        if not self.normal_dlg.isVisible() and len(selected_features) < 0:
+            return
+
+        # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
+        self.normal_dlg.table.setRowCount(0)
+        self.normal_map_tool.old_attr_values = []
+        self.normal_map_tool.input_widget_list = []
+
+        self.normal_map_tool.display_attrs(selected_features)
 
         # show the dialog
-        self.dlg.show()
+        self.normal_dlg.show()
 
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.normal_dlg.exec_()
 
-        # See if OK was pressed
-        # if result:
-        #     print("OK")
-        #     # Do something useful here - delete the line containing pass and
-        #     # substitute with your code.
-        #     pass
+        if result == 0:
+            self.actions[0].setChecked(False)
 
     # def set_map_tool(self):
     #     self.canvas.setMapTool(self.map_tool)

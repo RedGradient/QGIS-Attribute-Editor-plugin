@@ -44,6 +44,8 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.table = CustomTableWidget()
         self.saveBtn = QtWidgets.QPushButton("Сохранить")
         self.saveBtn.setEnabled(False)
+        self.ctrl_status = QtWidgets.QLabel("CTRL не нажат")
+        self.vbox.insertWidget(-1, self.ctrl_status)
         self.vbox.insertWidget(-1, self.table)
         self.vbox.insertWidget(-1, self.saveBtn)
 
@@ -66,9 +68,9 @@ class AttributeEditorSwitchDialog(AttributeEditorDialog):
         super(AttributeEditorSwitchDialog, self).__init__(parent)
 
         self.gotoLeft = QtWidgets.QPushButton("<-")
-        self.gotoLeft.setEnabled(False)
+        # self.gotoLeft.setEnabled(False)
         self.gotoRight = QtWidgets.QPushButton("->")
-        self.gotoRight.setEnabled(False)
+        # self.gotoRight.setEnabled(False)
 
         self.hbox.insertWidget(-1, self.gotoLeft)
         self.hbox.insertWidget(-1, self.gotoRight)
