@@ -24,9 +24,10 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.ctrl_status = QtWidgets.QLabel("CTRL не нажат")
         self.vbox.insertWidget(-1, self.ctrl_status)
         self.vbox.insertWidget(-1, self.table)
+
         self.vbox.insertWidget(-1, self.saveBtn)
 
-        self.hbox = QtWidgets.QHBoxLayout()
+
 
 
 
@@ -35,7 +36,7 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
 
         # self.hbox.insertWidget(-1, self.resetChangesBtn)
 
-        self.vbox.insertLayout(1, self.hbox)
+
 
         self.setLayout(self.vbox)
 
@@ -44,15 +45,15 @@ class AttributeEditorSwitchDialog(AttributeEditorDialog):
     def __init__(self, parent=None):
         super(AttributeEditorSwitchDialog, self).__init__(parent)
 
+        self.hbox = QtWidgets.QHBoxLayout()
+
         self.gotoLeft = QtWidgets.QPushButton("<-")
-        # self.gotoLeft.setEnabled(False)
         self.gotoRight = QtWidgets.QPushButton("->")
-        # self.gotoRight.setEnabled(False)
 
         self.hbox.insertWidget(-1, self.gotoLeft)
         self.hbox.insertWidget(-1, self.gotoRight)
 
-        # self.vbox.insertLayout(-1, self.hbox)
+        self.vbox.insertLayout(2, self.hbox)
 
 
 FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(

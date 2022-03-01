@@ -309,33 +309,33 @@ class PointTool(QgsMapTool):
     def on_gotoRight_click(self):
         index = self.mult_press_data["current_index"] + 1
         pressed_list = self.mult_press_data["pressed_list"]
-        print("Right", "index:", index, pressed_list)
         if index > len(pressed_list) - 1:
-            print("return")
             return
+        feature = self.mult_press_data["pressed_list"][index]
+        print("Right", index)
         self.mult_press_data["current_index"] += 1
 
         # select feature
         self.iface.activeLayer().removeSelection()
-        self.iface.activeLayer().select(pressed_list[index].id())
+        layer = self.iface.activeLayer()
+        layer.select(feature.id())
 
-        self.display_attrs([pressed_list[index]])
+        self.display_attrs([feature])
 
     def on_gotoLeft_click(self):
         index = self.mult_press_data["current_index"] - 1
-        pressed_list = self.mult_press_data["pressed_list"]
-        print("Left", "index:", index, pressed_list)
         if index < 0:
-            print("return")
             return
+        feature = self.mult_press_data["pressed_list"][index]
         self.mult_press_data["current_index"] -= 1
+        print("Left", index)
 
         # select feature
         self.iface.activeLayer().removeSelection()
-        self.iface.activeLayer().select(pressed_list[index].id())
+        layer = self.iface.activeLayer()
+        layer.select(feature.id())
 
-        self.iface.activeLayer().removeSelection()
-        self.display_attrs([pressed_list[index]])
+        self.display_attrs([feature])
 
     def on_textChanged(self, lineEdit: QLineEdit) -> Callable:
         def closure():
@@ -343,7 +343,6 @@ class PointTool(QgsMapTool):
             if lineEdit.old_text != lineEdit.text():
                 lineEdit.label.setChanged(True)
                 self.parent.saveBtn.setEnabled(True)
-                # self.parent.resetChangesBtn.setEnabled(True)
                 if lineEdit not in self.changed_inputs:
                     self.changed_inputs.append(lineEdit)
             else:
@@ -352,7 +351,6 @@ class PointTool(QgsMapTool):
                     self.changed_inputs.remove(lineEdit)
                 if len(self.changed_inputs) == 0:
                     self.parent.saveBtn.setEnabled(False)
-                    # self.parent.resetChangesBtn.setEnabled(False)
 
         return closure
 
