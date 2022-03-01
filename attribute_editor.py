@@ -23,7 +23,7 @@ RS = ET.parse(os.path.dirname(__file__) + '/RS data/RS.mixml')
 
 
 class PointTool(QgsMapTool):
-    def __init__(self, parent, iface, canvas):
+    def __init__(self, parent, iface, canvas, mode: str):
         self.parent = parent
         self.iface = iface
         self.old_attr_values = []
@@ -32,7 +32,7 @@ class PointTool(QgsMapTool):
         self.selected_features = []
         self.changed_inputs = []
         self.combo_box_list = []
-        self.mode = None  # "normal" or "switch"
+        self.mode = mode  # "normal" or "switch"
 
         self.mult_press_data = {"pressed_list": [], "current_index": -1}
 
@@ -109,6 +109,9 @@ class PointTool(QgsMapTool):
 
         self.display_attrs(self.selected_features)
 
+        if not self.parent.isVisible():
+            self.parent.show()
+
     @staticmethod
     def get_layer_node(root, layer_name):
         """Searches for node corresponding to the given layer name"""
@@ -123,6 +126,8 @@ class PointTool(QgsMapTool):
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
             self.feat_select_dlg.reject()
+            if not self.parent.isVisible():
+                self.parent.show()
 
         return closure
 
@@ -303,21 +308,34 @@ class PointTool(QgsMapTool):
 
     def on_gotoRight_click(self):
         index = self.mult_press_data["current_index"] + 1
-        print("Right", "index:", index, self.mult_press_data["pressed_list"])
-        if index > len(self.mult_press_data["pressed_list"]) - 1:
+        pressed_list = self.mult_press_data["pressed_list"]
+        print("Right", "index:", index, pressed_list)
+        if index > len(pressed_list) - 1:
             print("return")
             return
         self.mult_press_data["current_index"] += 1
-        self.display_attrs([self.mult_press_data["pressed_list"][index]])
+
+        # select feature
+        self.iface.activeLayer().removeSelection()
+        self.iface.activeLayer().select(pressed_list[index].id())
+
+        self.display_attrs([pressed_list[index]])
 
     def on_gotoLeft_click(self):
         index = self.mult_press_data["current_index"] - 1
-        print("Left", "index:", index, self.mult_press_data["pressed_list"])
+        pressed_list = self.mult_press_data["pressed_list"]
+        print("Left", "index:", index, pressed_list)
         if index < 0:
             print("return")
             return
         self.mult_press_data["current_index"] -= 1
-        self.display_attrs([self.mult_press_data["pressed_list"][index]])
+
+        # select feature
+        self.iface.activeLayer().removeSelection()
+        self.iface.activeLayer().select(pressed_list[index].id())
+
+        self.iface.activeLayer().removeSelection()
+        self.display_attrs([pressed_list[index]])
 
     def on_textChanged(self, lineEdit: QLineEdit) -> Callable:
         def closure():
@@ -512,6 +530,9 @@ class AttributeEditor:
         self.mult_editor_first_start = None
         self.switch_editor_first_start = None
 
+        self.normal_dlg = None
+        self.switch_dlg = None
+
         self.switch_pressed = False
         self.normal_pressed = False
 
@@ -637,6 +658,15 @@ class AttributeEditor:
             self.iface.removeToolBarIcon(action)
 
     def run_overlay(self):
+        layer = self.iface.activeLayer()
+        if layer is None:
+            self.switch_pressed = False
+            self.actions[1].setChecked(False)
+            return
+        # if layer has not geometry
+        if layer.wkbType() == 100:
+            return
+
         if self.switch_editor_first_start == True:
             self.switch_editor_first_start = False
             self.switch_dlg = AttributeEditorSwitchDialog()
@@ -651,46 +681,49 @@ class AttributeEditor:
                 return
         self.switch_pressed = True
 
-        # preparing
-        self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas)
-        self.switch_map_tool.mode = "switch"
+        # stop normal mode
+        self.normal_pressed = False
+        if self.normal_dlg is not None and self.normal_dlg.isVisible():
+            self.normal_dlg.reject()
+        self.actions[0].setChecked(False)
+
+        # prelude
+        self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, mode="switch")
         self.canvas.setMapTool(self.switch_map_tool)
 
-        layer = self.iface.activeLayer()
-
-        if layer is None:
-            return
-
-        # if layer has not geometry
-        if layer.wkbType() == 100:
-            return
-
-        # map(lambda a: a.setChecked(True), self.actions)
-
-        self.switch_dlg.table.setRowCount(0)
-        self.switch_map_tool.old_attr_values = []
-        self.switch_map_tool.input_widget_list = []
-        selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        self.switch_map_tool.display_attrs(selected_features)
+        # self.switch_dlg.table.setRowCount(0)
+        # self.switch_map_tool.old_attr_values = []
+        # self.switch_map_tool.input_widget_list = []
+        # selected_features = list(self.iface.activeLayer().getSelectedFeatures())
+        # self.switch_map_tool.display_attrs(selected_features)
 
         # show the dialog
-        self.switch_dlg.show()
+        # self.switch_dlg.show()
 
-        result = self.switch_dlg.exec_()
-        if result == 0:
-            self.actions[1].setChecked(False)
+        # result = self.switch_dlg.exec_()
+        # if result == 0:
+        #     self.actions[1].setChecked(False)
 
     def run(self):
         """Run method that performs all the real work"""
+        layer = self.iface.activeLayer()
+        if layer is None:
+            self.normal_pressed = False
+            self.actions[0].setChecked(False)
+            return
+        # if layer has not geometry
+        if layer.wkbType() == 100:
+            return
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.mult_editor_first_start == True:
             self.mult_editor_first_start = False
-            self.normal_dlg = AttributeEditorDialog()
+            self.normal_dlg = AttributeEditorDialog(parent=self.iface.mainWindow())
             # установка "always on top" (не работает в Linux)
-            self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+            # self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
+        # close dialog by clicking again
         if self.normal_pressed:
             if self.normal_dlg.isVisible():
                 self.normal_dlg.reject()
@@ -698,19 +731,27 @@ class AttributeEditor:
                 return
         self.normal_pressed = True
 
-        self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas)
-        self.normal_map_tool.mode = "normal"
-        self.canvas.setMapTool(self.normal_map_tool)
-        layer = self.iface.activeLayer()
+        # stop switch mode
+        self.switch_pressed = False
+        if self.switch_dlg is not None and self.switch_dlg.isVisible():
+            self.switch_dlg.reject()
+        self.actions[1].setChecked(False)
 
-        if layer is None:
-            return
-        # if layer has not geometry
-        if layer.wkbType() == 100:
-            return
+        self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, mode="normal")
+        self.canvas.setMapTool(self.normal_map_tool)
+
+        # layer = self.iface.activeLayer()
+        #
+        # if layer is None:
+        #     return
+        # # if layer has not geometry
+        # if layer.wkbType() == 100:
+        #     return
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        if not self.normal_dlg.isVisible() and len(selected_features) < 0:
+        print(self.normal_dlg.isVisible())
+        print(selected_features)
+        if len(selected_features) == 0:
             return
 
         # показываем атрибуты объектов, которые были выделены ДО открытия окна плагина
@@ -728,9 +769,3 @@ class AttributeEditor:
 
         if result == 0:
             self.actions[0].setChecked(False)
-
-    # def set_map_tool(self):
-    #     self.canvas.setMapTool(self.map_tool)
-
-    # def unset_map_tool(self):
-    #     self.map_tool.layer.canvas.unsetMapTool(self.map_tool)

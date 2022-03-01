@@ -52,7 +52,7 @@ class AttributeEditorSwitchDialog(AttributeEditorDialog):
         self.hbox.insertWidget(-1, self.gotoLeft)
         self.hbox.insertWidget(-1, self.gotoRight)
 
-        self.vbox.insertLayout(-1, self.hbox)
+        # self.vbox.insertLayout(-1, self.hbox)
 
 
 FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(
