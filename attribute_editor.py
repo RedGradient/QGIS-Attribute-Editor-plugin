@@ -18,8 +18,8 @@ from .attribute_editor_dialog import *
 import os.path
 import xml.etree.ElementTree as ET
 
-CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS data/classifier.grq')
-RS = ET.parse(os.path.dirname(__file__) + '/RS data/RS.mixml')
+CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS/classifier.grq')
+RS = ET.parse(os.path.dirname(__file__) + '/RS/RS.mixml')
 
 
 class PointTool(QgsMapTool):
