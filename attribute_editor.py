@@ -637,7 +637,7 @@ class AttributeEditor:
 
         self.add_action(
             icon_path,
-            text=self.tr(u'Множ. и одинар. редактирование'),
+            text=self.tr(u'Одиночное и множественное редактирование'),
             callback=self.run,
             parent=self.iface.mainWindow()
         )
