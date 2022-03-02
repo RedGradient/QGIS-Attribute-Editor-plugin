@@ -25,13 +25,7 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.ctrl_status = QtWidgets.QLabel("CTRL не нажат")
         self.vbox.insertWidget(-1, self.ctrl_status)
         self.vbox.insertWidget(-1, self.table)
-
         self.vbox.insertWidget(-1, self.saveBtn)
-
-        # self.resetChangesBtn = QtWidgets.QPushButton("Сбросить изменения")
-        # self.resetChangesBtn.setEnabled(False)
-
-        # self.hbox.insertWidget(-1, self.resetChangesBtn)
 
         self.setLayout(self.vbox)
 

@@ -8,7 +8,7 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
     QPushButton, QComboBox, QWidget, QSpacerItem
 from qgis.gui import QgsMapTool, QgsMapToolPan
-from qgis.core import edit, QgsGeometry, QgsPointXY
+from qgis.core import edit, QgsGeometry, QgsPointXY, QgsWkbTypes
 from qgis._core import *
 
 # Initialize Qt resources from file resources.py
@@ -457,6 +457,7 @@ class PointTool(QgsMapTool):
                 if len(self.changed_inputs) == 0:
                     self.parent.saveBtn.setEnabled(False)
                     # self.parent.resetChangesBtn.setEnabled(False)
+
         return closure
 
     def on_resetChangesBtn_clicked(self) -> None:
@@ -479,7 +480,6 @@ class PointTool(QgsMapTool):
         self.parent.resetChangesBtn.setEnabled(False)
         self.parent.saveBtn.setEnabled(False)
 
-
     @staticmethod
     def is_correct(item: str, choice: List) -> bool:
         if item not in choice:
@@ -496,6 +496,7 @@ class PointTool(QgsMapTool):
     def show_invalid_inputs_callback(self, lineEdit: QLineEdit, choice: List) -> Callable:
         def closure():
             self.show_invalid_inputs(lineEdit, choice)
+
         return closure
 
 
@@ -678,27 +679,34 @@ class AttributeEditor:
         if self.switch_editor_first_start == True:
             self.switch_editor_first_start = False
             self.switch_dlg = AttributeEditorSwitchDialog()
+            # self.switch_dlg.rejected.connect(self.on_switch_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             self.switch_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
-        # close dialog if opened (pressed)
-        if self.switch_pressed:
+        if not self.actions[1].isChecked():
+            self.canvas.setMapTool(QgsMapToolPan(self.canvas))
             if self.switch_dlg.isVisible():
                 self.switch_dlg.reject()
-                self.switch_pressed = False
-                return
-            # else:
-            #     print("set tool")
-            #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-            #     self.switch_pressed = False
-            #     return
-        self.switch_pressed = True
+            return
+
+        # close dialog if opened (pressed)
+        # if self.switch_pressed:
+        #     if self.switch_dlg.isVisible():
+        #         self.switch_dlg.reject()
+        #         self.switch_pressed = False
+        #         return
+        #     # else:
+        #     #     print("set tool")
+        #     #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        #     #     self.switch_pressed = False
+        #     #     return
+        # self.switch_pressed = True
 
         # stop normal mode
-        self.normal_pressed = False
-        if self.normal_dlg is not None and self.normal_dlg.isVisible():
-            self.normal_dlg.reject()
-        self.actions[0].setChecked(False)
+        # self.normal_pressed = False
+        # if self.normal_dlg is not None and self.normal_dlg.isVisible():
+        #     self.normal_dlg.reject()
+        # self.actions[0].setChecked(False)
 
         # prelude
         self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, mode="switch")
@@ -724,7 +732,9 @@ class AttributeEditor:
             self.normal_pressed = False
             self.actions[0].setChecked(False)
             return
-        # if layer has not geometry
+
+        # if layer has no geometry
+        # QgsWkbTypes.Unknown
         if layer.wkbType() == 100:
             return
 
@@ -733,38 +743,37 @@ class AttributeEditor:
         if self.mult_editor_first_start == True:
             self.mult_editor_first_start = False
             self.normal_dlg = AttributeEditorDialog(parent=self.iface.mainWindow())
+            # self.normal_dlg.rejected.connect(self.on_normal_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             # self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         # close dialog by clicking again
-        if self.normal_pressed:
+        # if self.normal_pressed:
+        #     if self.normal_dlg.isVisible():
+        #         self.normal_dlg.reject()
+        #         self.normal_pressed = False
+        #         return
+        #     # else:
+        #     #     print("set tool")
+        #     #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        #     #     self.normal_pressed = False
+        #     #     return
+        # self.normal_pressed = True
+
+        if not self.actions[0].isChecked():
+            self.canvas.setMapTool(QgsMapToolPan(self.canvas))
             if self.normal_dlg.isVisible():
                 self.normal_dlg.reject()
-                self.normal_pressed = False
-                return
-            # else:
-            #     print("set tool")
-            #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-            #     self.normal_pressed = False
-            #     return
-        self.normal_pressed = True
+            return
 
         # stop switch mode
-        self.switch_pressed = False
-        if self.switch_dlg is not None and self.switch_dlg.isVisible():
-            self.switch_dlg.reject()
-        self.actions[1].setChecked(False)
+        # self.switch_pressed = False
+        # if self.switch_dlg is not None and self.switch_dlg.isVisible():
+        #     self.switch_dlg.reject()
+        # self.actions[1].setChecked(False)
 
         self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, mode="normal")
         self.canvas.setMapTool(self.normal_map_tool)
-
-        # layer = self.iface.activeLayer()
-        #
-        # if layer is None:
-        #     return
-        # # if layer has not geometry
-        # if layer.wkbType() == 100:
-        #     return
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
         if len(selected_features) == 0:
@@ -783,8 +792,16 @@ class AttributeEditor:
         # Run the dialog event loop
         result = self.normal_dlg.exec_()
 
-        if result == 0:
-            self.actions[0].setChecked(False)
-            # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-            # return
-            # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        # if result == 0:
+        #     self.actions[0].setChecked(False)
+        # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        # return
+        # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+
+    def on_switch_dlg_rejected(self):
+        self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        self.actions[1].setChecked(False)
+
+    def on_normal_dlg_rejected(self):
+        self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+        self.actions[0].setChecked(False)
