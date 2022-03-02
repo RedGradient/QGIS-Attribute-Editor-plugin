@@ -3,6 +3,7 @@ import os
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import Qt
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -14,7 +15,7 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         # self.setupUi(self)
-
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setGeometry(0, 0, 500, 600)
         self.vbox = QtWidgets.QVBoxLayout()
 
@@ -27,16 +28,10 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.vbox.insertWidget(-1, self.saveBtn)
 
-
-
-
-
         # self.resetChangesBtn = QtWidgets.QPushButton("Сбросить изменения")
         # self.resetChangesBtn.setEnabled(False)
 
         # self.hbox.insertWidget(-1, self.resetChangesBtn)
-
-
 
         self.setLayout(self.vbox)
 

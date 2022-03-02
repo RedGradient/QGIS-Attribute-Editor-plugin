@@ -7,7 +7,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
     QPushButton, QComboBox, QWidget, QSpacerItem
-from qgis.gui import QgsMapTool
+from qgis.gui import QgsMapTool, QgsMapToolPan
 from qgis.core import QgsGeometry, QgsPointXY
 from qgis._core import *
 
@@ -24,6 +24,9 @@ RS = ET.parse(os.path.dirname(__file__) + '/RS data/RS.mixml')
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, mode: str):
+        """
+        :mode Can be 'normal' or 'switch'
+        """
         self.parent = parent
         self.iface = iface
         self.old_attr_values = []
@@ -74,16 +77,19 @@ class PointTool(QgsMapTool):
         self.changed_inputs = []
 
         # support selection with ctrl
-        if not self.ctrl_pressed:
+        if self.mode == "normal":
+            if not self.ctrl_pressed:
+                layer.removeSelection()
+                self.selected_features = []
+                if len(pressed_features) == 0:
+                    self.parent.table.setRowCount(0)
+                    self.input_widget_list = []
+                    return
+        if self.mode == "switch":
             layer.removeSelection()
             self.selected_features = []
-            if len(pressed_features) == 0:
-                self.parent.table.setRowCount(0)
-                self.input_widget_list = []
-                return
 
         # show dialog with choice of features if there are more than one feature on press point
-        print(self.mode)
         if len(pressed_features) > 1:
             self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
             # show dialog with layer selector
@@ -125,6 +131,7 @@ class PointTool(QgsMapTool):
         def closure():
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
+            self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
                 self.parent.show()
@@ -312,7 +319,6 @@ class PointTool(QgsMapTool):
         if index > len(pressed_list) - 1:
             return
         feature = self.mult_press_data["pressed_list"][index]
-        print("Right", index)
         self.mult_press_data["current_index"] += 1
 
         # select feature
@@ -328,7 +334,6 @@ class PointTool(QgsMapTool):
             return
         feature = self.mult_press_data["pressed_list"][index]
         self.mult_press_data["current_index"] -= 1
-        print("Left", index)
 
         # select feature
         self.iface.activeLayer().removeSelection()
@@ -339,7 +344,6 @@ class PointTool(QgsMapTool):
 
     def on_textChanged(self, lineEdit: QLineEdit) -> Callable:
         def closure():
-            print("on_textChanged")
             if lineEdit.old_text != lineEdit.text():
                 lineEdit.label.setChanged(True)
                 self.parent.saveBtn.setEnabled(True)
@@ -409,20 +413,29 @@ class PointTool(QgsMapTool):
             return
 
         current_attr_values = []
-        print("Длина списка с виджетами -", len(self.input_widget_list))
         for widget in self.input_widget_list:
+            # при некоторых условиях (неизвестно, каких) возникает RuntimeError из-за обращения
+            # к удаленному C++ объекту - виджету, на строчке current_attr_values.append(widget.text())
+            # на сохранение не влияет
             if isinstance(widget, QLineEdit):
-                current_attr_values.append(widget.text())
+                try:
+                    current_attr_values.append(widget.text())
+                except RuntimeError:
+                    print("RuntimeError")
             elif isinstance(widget, QComboBox):
-                current_attr_values.append(widget.currentText())
-
+                try:
+                    current_attr_values.append(widget.currentText())
+                except RuntimeError:
+                    print("RuntimeError")
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
+        print("new_attr_values:", new_attr_values)
 
         self.iface.activeLayer().startEditing()
         for feature in self.selected_features:
             for index, value in new_attr_values.items():
                 if not self.iface.activeLayer().changeAttributeValue(feature.id(), index, value):
                     raise Exception("Save Error")
+                print((index, value))
         self.iface.activeLayer().commitChanges()
 
         self.parent.saveBtn.setEnabled(False)
@@ -431,7 +444,6 @@ class PointTool(QgsMapTool):
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
         def closure(index: int):
-            print("on_currentIndexChanged")
             other_combo_box.setCurrentIndex(index)
             if combo_box.old_text != combo_box.currentText():
                 combo_box.label.setChanged(True)
@@ -477,7 +489,6 @@ class PointTool(QgsMapTool):
 
     def show_invalid_inputs(self, lineEdit: QLineEdit, choice: List) -> None:
         text = lineEdit.text()
-        # print(lineEdit.text(), choice)
         if not self.is_correct(text, choice):
             lineEdit.setDangerStyle()
         else:
@@ -677,6 +688,11 @@ class AttributeEditor:
                 self.switch_dlg.reject()
                 self.switch_pressed = False
                 return
+            # else:
+            #     print("set tool")
+            #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+            #     self.switch_pressed = False
+            #     return
         self.switch_pressed = True
 
         # stop normal mode
@@ -727,6 +743,11 @@ class AttributeEditor:
                 self.normal_dlg.reject()
                 self.normal_pressed = False
                 return
+            # else:
+            #     print("set tool")
+            #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+            #     self.normal_pressed = False
+            #     return
         self.normal_pressed = True
 
         # stop switch mode
@@ -747,8 +768,6 @@ class AttributeEditor:
         #     return
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        print(self.normal_dlg.isVisible())
-        print(selected_features)
         if len(selected_features) == 0:
             return
 
@@ -767,3 +786,6 @@ class AttributeEditor:
 
         if result == 0:
             self.actions[0].setChecked(False)
+            # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+            # return
+            # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
