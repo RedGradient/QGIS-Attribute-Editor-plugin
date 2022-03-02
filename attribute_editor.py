@@ -32,7 +32,6 @@ class PointTool(QgsMapTool):
         self.old_attr_values = []
         self.input_widget_list = []  # needs for saving
         self.first_start = True
-        self.selected_features = []
         self.changed_inputs = []
         self.combo_box_list = []
         self.mode = mode  # "normal" or "switch"
@@ -80,14 +79,12 @@ class PointTool(QgsMapTool):
         if self.mode == "normal":
             if not self.ctrl_pressed:
                 layer.removeSelection()
-                self.selected_features = []
                 if len(pressed_features) == 0:
                     self.parent.table.setRowCount(0)
                     self.input_widget_list = []
                     return
         if self.mode == "switch":
             layer.removeSelection()
-            self.selected_features = []
 
         # show dialog with choice of features if there are more than one feature on press point
         if len(pressed_features) > 1:
@@ -111,9 +108,8 @@ class PointTool(QgsMapTool):
         # select pressed features on the layer
         for feature in pressed_features:
             layer.select(feature.id())
-            self.selected_features.append(feature)
 
-        self.display_attrs(self.selected_features)
+        self.display_attrs(layer.selectedFeatures())
 
         if not self.parent.isVisible():
             self.parent.show()
@@ -131,7 +127,7 @@ class PointTool(QgsMapTool):
         def closure():
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
-            self.selected_features.append(feature)
+            # self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
                 self.parent.show()
@@ -275,7 +271,6 @@ class PointTool(QgsMapTool):
                     self.old_attr_values.append('')
                     input_widget.old_text = ''
                 else:
-                    # input_widget.lineEdit().setText(item[1])
                     if item[1] in variants:
                         index = variants.index(item[1])
                         input_widget.setCurrentIndex(index)
@@ -285,7 +280,6 @@ class PointTool(QgsMapTool):
                     input_widget.old_text = item[1]
 
                 input_widget.variants = variants
-                # variants = [input_widget.itemText(k) for k in range(input_widget.count())]
                 self.show_invalid_inputs(input_widget.lineEdit(), variants)
 
                 # set event handlers
@@ -414,24 +408,25 @@ class PointTool(QgsMapTool):
 
         current_attr_values = []
         for widget in self.input_widget_list:
-            # при некоторых условиях (неизвестно, каких) возникает RuntimeError из-за обращения
-            # к удаленному C++ объекту - виджету, на строчке current_attr_values.append(widget.text())
-            # на сохранение не влияет
+            """
+            при некоторых условиях (неизвестно, каких) возникает RuntimeError из-за обращения к удаленному C++ 
+            объекту - виджету; обращение происходит на строчке current_attr_values.append(widget.text());
+            ошибка на сохранение не влияет
+            """
             if isinstance(widget, QLineEdit):
                 try:
                     current_attr_values.append(widget.text())
                 except RuntimeError:
-                    print("RuntimeError")
+                    pass
             elif isinstance(widget, QComboBox):
                 try:
                     current_attr_values.append(widget.currentText())
                 except RuntimeError:
-                    print("RuntimeError")
+                    pass
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
         print("new_attr_values:", new_attr_values)
 
         layer = self.iface.activeLayer()
-        print("self.selected_features:", self.selected_features)
         with edit(layer):
             for feature in layer.selectedFeatures():
                 # for feat_idx, new_value in new_attr_values.items():
@@ -672,7 +667,7 @@ class AttributeEditor:
             self.switch_pressed = False
             self.actions[1].setChecked(False)
             return
-        # if layer has not geometry
+        # if layer has no geometry
         if layer.wkbType() == 100:
             return
 
@@ -688,42 +683,11 @@ class AttributeEditor:
             if self.switch_dlg.isVisible():
                 self.switch_dlg.reject()
             return
-
-        # close dialog if opened (pressed)
-        # if self.switch_pressed:
-        #     if self.switch_dlg.isVisible():
-        #         self.switch_dlg.reject()
-        #         self.switch_pressed = False
-        #         return
-        #     # else:
-        #     #     print("set tool")
-        #     #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-        #     #     self.switch_pressed = False
-        #     #     return
-        # self.switch_pressed = True
-
-        # stop normal mode
-        # self.normal_pressed = False
-        # if self.normal_dlg is not None and self.normal_dlg.isVisible():
-        #     self.normal_dlg.reject()
-        # self.actions[0].setChecked(False)
+        self.actions[0].setChecked(False)
 
         # prelude
         self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, mode="switch")
         self.canvas.setMapTool(self.switch_map_tool)
-
-        # self.switch_dlg.table.setRowCount(0)
-        # self.switch_map_tool.old_attr_values = []
-        # self.switch_map_tool.input_widget_list = []
-        # selected_features = list(self.iface.activeLayer().getSelectedFeatures())
-        # self.switch_map_tool.display_attrs(selected_features)
-
-        # show the dialog
-        # self.switch_dlg.show()
-
-        # result = self.switch_dlg.exec_()
-        # if result == 0:
-        #     self.actions[1].setChecked(False)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -747,30 +711,13 @@ class AttributeEditor:
             # установка "always on top" (не работает в Linux)
             # self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
 
-        # close dialog by clicking again
-        # if self.normal_pressed:
-        #     if self.normal_dlg.isVisible():
-        #         self.normal_dlg.reject()
-        #         self.normal_pressed = False
-        #         return
-        #     # else:
-        #     #     print("set tool")
-        #     #     self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-        #     #     self.normal_pressed = False
-        #     #     return
-        # self.normal_pressed = True
-
+        # on de-check: close window & unset tool
         if not self.actions[0].isChecked():
             self.canvas.setMapTool(QgsMapToolPan(self.canvas))
             if self.normal_dlg.isVisible():
                 self.normal_dlg.reject()
             return
-
-        # stop switch mode
-        # self.switch_pressed = False
-        # if self.switch_dlg is not None and self.switch_dlg.isVisible():
-        #     self.switch_dlg.reject()
-        # self.actions[1].setChecked(False)
+        self.actions[1].setChecked(False)
 
         self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, mode="normal")
         self.canvas.setMapTool(self.normal_map_tool)
