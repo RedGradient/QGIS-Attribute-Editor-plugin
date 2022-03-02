@@ -8,7 +8,7 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
     QPushButton, QComboBox, QWidget, QSpacerItem
 from qgis.gui import QgsMapTool, QgsMapToolPan
-from qgis.core import QgsGeometry, QgsPointXY
+from qgis.core import edit, QgsGeometry, QgsPointXY
 from qgis._core import *
 
 # Initialize Qt resources from file resources.py
@@ -430,13 +430,12 @@ class PointTool(QgsMapTool):
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
         print("new_attr_values:", new_attr_values)
 
-        self.iface.activeLayer().startEditing()
-        for feature in self.selected_features:
-            for index, value in new_attr_values.items():
-                if not self.iface.activeLayer().changeAttributeValue(feature.id(), index, value):
-                    raise Exception("Save Error")
-                print((index, value))
-        self.iface.activeLayer().commitChanges()
+        layer = self.iface.activeLayer()
+        print("self.selected_features:", self.selected_features)
+        with edit(layer):
+            for feature in layer.selectedFeatures():
+                # for feat_idx, new_value in new_attr_values.items():
+                layer.changeAttributeValues(feature.id(), new_attr_values)
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
