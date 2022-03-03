@@ -121,6 +121,19 @@ class PointTool(QgsMapTool):
             if node.attrib.get('name') == layer_name:
                 return node
 
+    def get_layer_ref(self, root, layer_name: str):
+        # result = None
+        for node in root:
+            if node.tag in ["catalogs", "Catalog"]:
+                if result := self.get_layer_ref(node, layer_name):
+                    return result
+                continue
+            elif node.tag == "PhisicalLayer" and node.attrib.get("name") == layer_name:
+                if node[0].tag == "layerRef":
+                    return node[0].attrib.get("name")
+
+        return None
+
     def on_select_feat_btn_clicked(self, feature) -> Callable:
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
@@ -193,7 +206,10 @@ class PointTool(QgsMapTool):
 
         self.parent.table.setRowCount(len(data))
 
-        node = self.get_layer_node(RS.getroot(), self.iface.activeLayer().name())
+        node = self.get_layer_node(
+            RS.getroot(),
+            self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
+        )
         readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         meta: dict[str] = self.get_fields_meta(node, {})
 
