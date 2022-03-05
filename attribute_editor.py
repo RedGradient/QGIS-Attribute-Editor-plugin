@@ -122,7 +122,6 @@ class PointTool(QgsMapTool):
                 return node
 
     def get_layer_ref(self, root, layer_name: str):
-        # result = None
         for node in root:
             if node.tag in ["catalogs", "Catalog"]:
                 if result := self.get_layer_ref(node, layer_name):
@@ -204,23 +203,32 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-        self.parent.table.setRowCount(len(data))
-
-        node = self.get_layer_node(
-            RS.getroot(),
-            self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
-        )
+        # self.parent.table.setRowCount(len(data))
+        layer_ref = self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
+        if layer_ref is None:
+            widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
+            self.iface.messageBar().pushWidget(widget, Qgis.Warning)
+            return
+        node = self.get_layer_node(RS.getroot(), layer_ref)
         readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         meta: dict[str] = self.get_fields_meta(node, {})
 
         # show attributes
         self.combo_box_list = []
         self.input_widget_list = []
+        self.no_field_list = []
         for i, item in enumerate(data.items()):
             label = CustomLabel(item[0])
             input_widget = QWidget()
 
-            if meta[item[0]]["type"] in ["Char", "Int", "Decimal"]:
+            field_data = meta.get(item[0])
+            if field_data is not None:
+                field_type = field_data["type"]
+            else:
+                self.no_field_list.append(item[0])
+                continue
+
+            if field_type in ["Char", "Int", "Decimal", "Data"]:
                 input_widget = CustomLineEdit()
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
@@ -232,7 +240,7 @@ class PointTool(QgsMapTool):
                     input_widget.old_text = item[1]
                 input_widget.textChanged.connect(self.on_textChanged(input_widget))
 
-            elif meta[item[0]]["type"] == "Dir":
+            elif field_type == "Dir":
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
@@ -269,7 +277,7 @@ class PointTool(QgsMapTool):
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
-            elif meta[item[0]]["type"] == "DirRef":
+            elif field_type == "DirRef":
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
@@ -314,14 +322,25 @@ class PointTool(QgsMapTool):
                     self.on_currentIndexChanged(input_widget, self.combo_box_list[-1])
                 )
 
+            else:
+                self.no_field_list.append(item[0])
+                continue
+
             input_widget.label = label
             self.input_widget_list.append(input_widget)
+            self.parent.table.setRowCount(self.parent.table.rowCount() + 1)
             self.parent.table.setRowHeight(i, 4)
             self.parent.table.setCellWidget(i, 0, label)
             self.parent.table.setCellWidget(i, 1, input_widget)
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
+        if self.no_field_list:
+            widget = self.iface.messageBar().createMessage(
+                "Следующие атрибуты не показаны, т.к. отсутствуют в системе требований",
+                str(tuple(self.no_field_list))
+            )
+            self.iface.messageBar().pushWidget(widget, Qgis.Warning)
 
     def on_gotoRight_click(self):
         index = self.mult_press_data["current_index"] + 1
