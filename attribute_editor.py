@@ -142,9 +142,10 @@ class PointTool(QgsMapTool):
             # self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
-                list_length = len(self.mult_press_data["pressed_list"])
-                label_text = f"{1}/{list_length}"
-                self.parent.label.setText(label_text)
+                if self.mode == "switch":
+                    list_length = len(self.mult_press_data["pressed_list"])
+                    label_text = f"{1}/{list_length}"
+                    self.parent.label.setText(label_text)
                 self.parent.show()
 
         return closure
@@ -698,14 +699,14 @@ class AttributeEditor:
         self.add_action(
             icon_path,
             text="Одиночное и множественное редактирование",
-            callback=self.run,
+            callback=self.run_normal_mode,
             parent=self.iface.mainWindow()
         )
 
         self.add_action(
             icon_path,
             text="Перечисление наложенных объектов",
-            callback=self.run_overlay,
+            callback=self.run_switch_mode,
             parent=self.iface.mainWindow()
         )
 
@@ -722,14 +723,16 @@ class AttributeEditor:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    def run_overlay(self):
+    def run_switch_mode(self):
         layer = self.iface.activeLayer()
         if layer is None:
-            self.switch_pressed = False
+            # self.switch_pressed = False
             self.actions[1].setChecked(False)
             return
         # if layer has no geometry
         if layer.wkbType() == 100:
+            self.actions[1].setChecked(False)
+            print("Активный слой не имеет геометрии")
             return
 
         if self.switch_editor_first_start == True:
@@ -750,17 +753,19 @@ class AttributeEditor:
         self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, mode="switch")
         self.canvas.setMapTool(self.switch_map_tool)
 
-    def run(self):
+    def run_normal_mode(self):
         """Run method that performs all the real work"""
         layer = self.iface.activeLayer()
         if layer is None:
-            self.normal_pressed = False
+            # self.normal_pressed = False
             self.actions[0].setChecked(False)
             return
 
         # if layer has no geometry
         # QgsWkbTypes.Unknown
         if layer.wkbType() == 100:
+            print("Активный слой не имеет геометрии")
+            self.actions[0].setChecked(False)
             return
 
         # Create the dialog with elements (after translation) and keep reference
