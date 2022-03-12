@@ -36,7 +36,7 @@ class PointTool(QgsMapTool):
         self.combo_box_list = []
         self.mode = mode  # "normal" or "switch"
 
-        self.mult_press_data = {"pressed_list": [], "current_index": -1}
+        self.mult_press_data = {"pressed_list": [], "current_index": 0}
 
         self.ctrl_pressed = False
 
@@ -143,6 +143,9 @@ class PointTool(QgsMapTool):
             # self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
+                list_length = len(self.mult_press_data["pressed_list"])
+                label_text = f"{1}/{list_length}"
+                self.parent.label.setText(label_text)
                 self.parent.show()
 
         return closure
@@ -328,7 +331,9 @@ class PointTool(QgsMapTool):
         pressed_list = self.mult_press_data["pressed_list"]
         if index > len(pressed_list) - 1:
             return
-        feature = self.mult_press_data["pressed_list"][index]
+        print(index)
+        self.parent.label.setText(f"{index + 1}/{len(pressed_list)}")
+        feature = pressed_list[index]
         self.mult_press_data["current_index"] += 1
 
         # select feature
@@ -342,6 +347,9 @@ class PointTool(QgsMapTool):
         index = self.mult_press_data["current_index"] - 1
         if index < 0:
             return
+        print(index)
+        list_length = len(self.mult_press_data["pressed_list"])
+        self.parent.label.setText(f"{index + 1}/{list_length}")
         feature = self.mult_press_data["pressed_list"][index]
         self.mult_press_data["current_index"] -= 1
 
@@ -429,24 +437,39 @@ class PointTool(QgsMapTool):
             объекту - виджету; обращение происходит на строчке current_attr_values.append(widget.text());
             ошибка на сохранение не влияет
             """
-            if isinstance(widget, QLineEdit):
-                try:
+            # if isinstance(widget, QLineEdit):
+            #     try:
+            #         current_attr_values.append(widget.text())
+            #     except RuntimeError:
+            #         pass
+            # elif isinstance(widget, QComboBox):
+            #     try:
+            #         current_attr_values.append(widget.currentText())
+            #     except RuntimeError:
+            #         pass
+            try:
+                if isinstance(widget, QLineEdit):
                     current_attr_values.append(widget.text())
-                except RuntimeError:
-                    pass
-            elif isinstance(widget, QComboBox):
-                try:
+                elif isinstance(widget, QComboBox):
                     current_attr_values.append(widget.currentText())
-                except RuntimeError:
-                    pass
+                else:
+                    raise Exception("Input widget has unknown type")
+            except RuntimeError:
+                pass
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
         print("new_attr_values:", new_attr_values)
 
         layer = self.iface.activeLayer()
+        print("New")
         with edit(layer):
             for feature in layer.selectedFeatures():
                 # for feat_idx, new_value in new_attr_values.items():
                 layer.changeAttributeValues(feature.id(), new_attr_values)
+                if self.mode == "switch":
+                    print("+++")
+                    index = self.mult_press_data["current_index"]
+                    self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
+                    self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
@@ -529,21 +552,23 @@ class AttributeEditor:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'AttributeEditor_{}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)
+        # initialize locale
+        # locale = QSettings().value('locale/userLocale')[0:2]
+        # locale_path = os.path.join(
+        #     self.plugin_dir,
+        #     'i18n',
+        #     'AttributeEditor_{}.qm'.format(locale))
+        #
+        # if os.path.exists(locale_path):
+        #     self.translator = QTranslator()
+        #     self.translator.load(locale_path)
+        #     QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Редактор атрибутов')
+        self.menu = "Редактор атрибутов"
+        # self.menu = self.tr(u'&Редактор атрибутов')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -557,19 +582,19 @@ class AttributeEditor:
         self.normal_pressed = False
 
     # noinspection PyMethodMayBeStatic
-    def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('AttributeEditor', message)
+    # def tr(self, message):
+    #     """Get the translation for a string using Qt translation API.
+    #
+    #     We implement this ourselves since we do not inherit QObject.
+    #
+    #     :param message: String for translation.
+    #     :type message: str, QString
+    #
+    #     :returns: Translated version of message.
+    #     :rtype: QString
+    #     """
+    #     # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
+    #     return QCoreApplication.translate('AttributeEditor', message)
 
     def add_action(
             self,
@@ -653,7 +678,7 @@ class AttributeEditor:
 
         self.add_action(
             icon_path,
-            text=self.tr(u'Одиночное и множественное редактирование'),
+            text="Одиночное и множественное редактирование",
             callback=self.run,
             parent=self.iface.mainWindow()
         )
@@ -673,7 +698,8 @@ class AttributeEditor:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&Редактор атрибутов'),
+                # self.tr(u'&Редактор атрибутов'),
+                "Редактор атрибутов",
                 action)
             self.iface.removeToolBarIcon(action)
 

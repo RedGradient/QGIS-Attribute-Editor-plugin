@@ -38,9 +38,12 @@ class AttributeEditorSwitchDialog(AttributeEditorDialog):
 
         self.gotoLeft = QtWidgets.QPushButton("<-")
         self.gotoRight = QtWidgets.QPushButton("->")
+        self.label = QtWidgets.QLabel("")
+        self.label.setAlignment(Qt.AlignCenter)
 
         self.hbox.insertWidget(-1, self.gotoLeft)
         self.hbox.insertWidget(-1, self.gotoRight)
+        self.hbox.insertWidget(-1, self.label)
 
         self.vbox.insertLayout(2, self.hbox)
 
