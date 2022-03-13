@@ -1,25 +1,22 @@
 # -*- coding: utf-8 -*-
+import os.path
 from typing import *
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem, QLabel, QVBoxLayout, QLineEdit, QHBoxLayout, \
-    QPushButton, QComboBox, QWidget, QSpacerItem
-from qgis.gui import QgsMapTool, QgsMapToolPan
-from qgis.core import edit, QgsGeometry, QgsPointXY, QgsWkbTypes
+from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox, QWidget
 from qgis._core import *
+from qgis.core import edit
+from qgis.gui import QgsMapTool, QgsMapToolPan
 
+from .RequirementsProvider import RequirementsProvider
 # Initialize Qt resources from file resources.py
-from .resources import *
 # Import the code for the dialog
 from .attribute_editor_dialog import *
-import os.path
-import xml.etree.ElementTree as ET
 
-CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS/classifier.grq')
-RS = ET.parse(os.path.dirname(__file__) + '/RS/RS.mixml')
+
+# CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS/classifier.grq')
+# RS = ET.parse(os.path.dirname(__file__) + '/RS/RS.mixml')
 
 
 class PointTool(QgsMapTool):
@@ -29,6 +26,7 @@ class PointTool(QgsMapTool):
         """
         self.parent = parent
         self.iface = iface
+        self.provider = RequirementsProvider("/RS/RS.mixml")
         self.old_attr_values = []
         self.input_widget_list = []  # needs for saving
         self.first_start = True
@@ -208,14 +206,17 @@ class PointTool(QgsMapTool):
                 data[key] = str(list(distinct_attrs)[0])
 
         # self.parent.table.setRowCount(len(data))
-        layer_ref = self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
-        if layer_ref is None:
-            widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
-            self.iface.messageBar().pushWidget(widget, Qgis.Warning)
-            return
-        node = self.get_layer_node(RS.getroot(), layer_ref)
-        readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
-        meta: dict[str] = self.get_fields_meta(node, {})
+        # layer_ref = self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
+        # if layer_ref is None:
+        #     widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
+        #     self.iface.messageBar().pushWidget(widget, Qgis.Warning)
+        #     return
+        # node = self.get_layer_node(RS.getroot(), layer_ref)
+        # readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
+        layer_name = self.iface.activeLayer().name()
+        readable_values = self.provider.get_readable_names()
+        meta: dict[str] = self.provider.get_fields_meta(layer_name)
+        print(meta)
 
         # show attributes
         self.combo_box_list = []
@@ -223,7 +224,7 @@ class PointTool(QgsMapTool):
         self.no_field_list = []
         for i, item in enumerate(data.items()):
             label = CustomLabel(item[0])
-            input_widget = QWidget()
+            # input_widget = QWidget()
 
             field_data = meta.get(item[0])
             if field_data is not None:
@@ -232,7 +233,7 @@ class PointTool(QgsMapTool):
                 self.no_field_list.append(item[0])
                 continue
 
-            if field_type in ["Char", "Int", "Decimal", "Data"]:
+            if field_type in ["Char", "Int", "Decimal", "Date"]:
                 input_widget = CustomLineEdit()
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
@@ -281,7 +282,7 @@ class PointTool(QgsMapTool):
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
-            elif field_type == "DirRef":
+            elif field_type == "DirValue":
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
@@ -420,7 +421,7 @@ class PointTool(QgsMapTool):
                     accum[i.attrib["name"]] = {"Required": False}
                 self.get_fields_meta(i[0], accum)
                 continue
-            if i.tag in ["Char", "Int", "Decimal"]:
+            if i.tag in ["Char", "Int", "Decimal", "Date"]:
                 accum[list(accum.keys())[-1]].update({"type": i.tag})
                 return None
             if i.tag == "Dir":
@@ -430,7 +431,7 @@ class PointTool(QgsMapTool):
                 accum[list(accum.keys())[-1]].update({"type": "Dir", "choice_fullcode": values})
                 return None
             if i.tag == "DirValue":
-                accum[list(accum.keys())[-1]].update({"type": "DirRef", "fieldRef": i[0].attrib.get("name")})
+                accum[list(accum.keys())[-1]].update({"type": "DirValue", "fieldRef": i[0].attrib.get("name")})
                 return None
         return accum
 
