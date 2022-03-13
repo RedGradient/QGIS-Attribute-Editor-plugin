@@ -196,6 +196,10 @@ class PointTool(QgsMapTool):
         # node = self.get_layer_node(RS.getroot(), layer_ref)
         # readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         layer_name = self.iface.activeLayer().name()
+        if CLASSIFIER.get_layer_ref(layer_name) is None:
+            widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
+            self.iface.messageBar().pushWidget(widget, Qgis.Warning)
+            return
         readable_values = CLASSIFIER.get_readable_names()
         meta: dict[str] = CLASSIFIER.get_fields_meta(layer_name)
 
