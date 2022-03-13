@@ -61,13 +61,12 @@ class RequirementsProvider:
 
     def get_layer_node(self, layer_name: str):
         """Searches for node corresponding to the given layer name"""
-        layer_name = self._get_layer_ref(layer_name)
-        assert layer_name is not None
+        layer_name = self.get_layer_ref(layer_name)
         for node in self.classifier.iter('tLayer'):
             if node.attrib.get('name') == layer_name:
                 return node
 
-    def _get_layer_ref(self, layer_name: str):
+    def get_layer_ref(self, layer_name: str):
         for physical_layer in self.classifier.iter("PhisicalLayer"):
             if physical_layer.attrib["name"] == layer_name:
                 layer_ref = physical_layer[0].attrib["name"]
@@ -85,10 +84,10 @@ class RequirementsProvider:
 if __name__ == '__main__':
     provider = RequirementsProvider("/RS/RS.mixml")
 
-    assert provider._get_layer_ref("Такого слоя нет") is None
-    assert provider._get_layer_ref("Внутригород_тер_города_ФЗ") == "Территория_МО"
-    assert provider._get_layer_ref("Охранная_зона_трансп_коммун") == "Охранная_зона_трансп_коммун"
-    assert provider._get_layer_ref("Тер_инвест_деятельности") == "Территории_инвест_деят"
+    assert provider.get_layer_ref("Такого слоя нет") is None
+    assert provider.get_layer_ref("Внутригород_тер_города_ФЗ") == "Территория_МО"
+    assert provider.get_layer_ref("Охранная_зона_трансп_коммун") == "Охранная_зона_трансп_коммун"
+    assert provider.get_layer_ref("Тер_инвест_деятельности") == "Территории_инвест_деят"
 
     # assert provider.get_field_type("Зем_участки", "Идентификатор_объекта") == "Char"
     # assert provider.get_field_type("Зем_участки", "Код_объекта") == "DirValue"
@@ -101,3 +100,4 @@ if __name__ == '__main__':
 
     assert provider.get_layer_node("Внутригород_тер_города_ФЗ").attrib["name"] == "Территория_МО"
     assert provider.get_layer_node("Зем_участки").attrib["name"] == "Зем_участки"
+    assert provider.get_layer_node("Такого слоя нет") is None
