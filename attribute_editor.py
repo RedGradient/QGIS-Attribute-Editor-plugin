@@ -187,14 +187,6 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-        # self.parent.table.setRowCount(len(data))
-        # layer_ref = self.get_layer_ref(RS.getroot(), self.iface.activeLayer().name())
-        # if layer_ref is None:
-        #     widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
-        #     self.iface.messageBar().pushWidget(widget, Qgis.Warning)
-        #     return
-        # node = self.get_layer_node(RS.getroot(), layer_ref)
-        # readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         layer_name = self.iface.activeLayer().name()
         if CLASSIFIER.get_layer_ref(layer_name) is None:
             widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
