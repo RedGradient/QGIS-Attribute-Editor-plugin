@@ -112,25 +112,6 @@ class PointTool(QgsMapTool):
         if not self.parent.isVisible():
             self.parent.show()
 
-    @staticmethod
-    def get_layer_node(root, layer_name):
-        """Searches for node corresponding to the given layer name"""
-        for node in root.iter('tLayer'):
-            if node.attrib.get('name') == layer_name:
-                return node
-
-    def get_layer_ref(self, root, layer_name: str):
-        for node in root:
-            if node.tag in ["catalogs", "Catalog"]:
-                if result := self.get_layer_ref(node, layer_name):
-                    return result
-                continue
-            elif node.tag == "PhisicalLayer" and node.attrib.get("name") == layer_name:
-                if node[0].tag == "layerRef":
-                    return node[0].attrib.get("name")
-
-        return None
-
     def on_select_feat_btn_clicked(self, feature) -> Callable:
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
@@ -216,7 +197,6 @@ class PointTool(QgsMapTool):
         layer_name = self.iface.activeLayer().name()
         readable_values = self.provider.get_readable_names()
         meta: dict[str] = self.provider.get_fields_meta(layer_name)
-        print(meta)
 
         # show attributes
         self.combo_box_list = []
@@ -352,7 +332,6 @@ class PointTool(QgsMapTool):
         pressed_list = self.mult_press_data["pressed_list"]
         if index > len(pressed_list) - 1:
             return
-        print(index)
         self.parent.label.setText(f"{index + 1}/{len(pressed_list)}")
         feature = pressed_list[index]
         self.mult_press_data["current_index"] += 1
@@ -368,7 +347,6 @@ class PointTool(QgsMapTool):
         index = self.mult_press_data["current_index"] - 1
         if index < 0:
             return
-        print(index)
         list_length = len(self.mult_press_data["pressed_list"])
         self.parent.label.setText(f"{index + 1}/{list_length}")
         feature = self.mult_press_data["pressed_list"][index]
@@ -396,44 +374,6 @@ class PointTool(QgsMapTool):
                     self.parent.saveBtn.setEnabled(False)
 
         return closure
-
-    def get_readable_name(self, node, acc: Dict) -> Dict:
-        """Takes xml node and returns all <name>.text from it"""
-        for i in node:
-            if i.tag == "Directory":
-                self.get_readable_name(i, acc)
-                continue
-            if i.tag == "DirElement":
-                self.get_readable_name(i, acc)
-                continue
-            if i.tag == "name":
-                acc.update({node.attrib["FullCode"]: {"text": i.text, "code": node.attrib["code"]}})
-                continue
-        return acc
-
-    def get_fields_meta(self, node, accum: Dict):
-        for i in node:
-            if i.tag == "field":
-                is_required = i[0].attrib.get("Required")
-                if is_required is not None:
-                    accum[i.attrib["name"]] = {"Required": True}
-                else:
-                    accum[i.attrib["name"]] = {"Required": False}
-                self.get_fields_meta(i[0], accum)
-                continue
-            if i.tag in ["Char", "Int", "Decimal", "Date"]:
-                accum[list(accum.keys())[-1]].update({"type": i.tag})
-                return None
-            if i.tag == "Dir":
-                values = []
-                for val in i[0]:
-                    values.append(val.text)
-                accum[list(accum.keys())[-1]].update({"type": "Dir", "choice_fullcode": values})
-                return None
-            if i.tag == "DirValue":
-                accum[list(accum.keys())[-1]].update({"type": "DirValue", "fieldRef": i[0].attrib.get("name")})
-                return None
-        return accum
 
     @staticmethod
     def get_changed_attrs(old_attrs: List, new_attrs: List) -> Dict:
@@ -478,23 +418,19 @@ class PointTool(QgsMapTool):
             except RuntimeError:
                 pass
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
-        print("new_attr_values:", new_attr_values)
 
         layer = self.iface.activeLayer()
-        print("New")
         with edit(layer):
             for feature in layer.selectedFeatures():
                 # for feat_idx, new_value in new_attr_values.items():
                 layer.changeAttributeValues(feature.id(), new_attr_values)
                 if self.mode == "switch":
-                    print("+++")
                     index = self.mult_press_data["current_index"]
                     self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
                     self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
-        print("saved")
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
         def closure(index: int):
