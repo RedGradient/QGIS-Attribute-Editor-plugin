@@ -17,6 +17,7 @@ from .attribute_editor_dialog import *
 
 # CLASSIFIER = ET.parse(os.path.dirname(__file__) + '/RS/classifier.grq')
 # RS = ET.parse(os.path.dirname(__file__) + '/RS/RS.mixml')
+CLASSIFIER = RequirementsProvider("/RS/RS.mixml")
 
 
 class PointTool(QgsMapTool):
@@ -26,7 +27,7 @@ class PointTool(QgsMapTool):
         """
         self.parent = parent
         self.iface = iface
-        self.provider = RequirementsProvider("/RS/RS.mixml")
+        # self.provider = RequirementsProvider("/RS/RS.mixml")
         self.old_attr_values = []
         self.input_widget_list = []  # needs for saving
         self.first_start = True
@@ -195,8 +196,8 @@ class PointTool(QgsMapTool):
         # node = self.get_layer_node(RS.getroot(), layer_ref)
         # readable_values = self.get_readable_name(CLASSIFIER.find("Source/Classifier"), {})
         layer_name = self.iface.activeLayer().name()
-        readable_values = self.provider.get_readable_names()
-        meta: dict[str] = self.provider.get_fields_meta(layer_name)
+        readable_values = CLASSIFIER.get_readable_names()
+        meta: dict[str] = CLASSIFIER.get_fields_meta(layer_name)
 
         # show attributes
         self.combo_box_list = []
