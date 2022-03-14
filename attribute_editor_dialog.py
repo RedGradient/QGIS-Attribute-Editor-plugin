@@ -10,10 +10,10 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'attribute_editor_dialog_base.ui'))
 
 
-class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
+class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
-        super(AttributeEditorDialog, self).__init__(parent)
+        super(AttributeEditorBaseDialog, self).__init__(parent)
         # self.setupUi(self)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setGeometry(0, 0, 500, 600)
@@ -30,7 +30,15 @@ class AttributeEditorDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setLayout(self.vbox)
 
 
-class AttributeEditorSwitchDialog(AttributeEditorDialog):
+class AttributeEditorDialog(AttributeEditorBaseDialog):
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(AttributeEditorDialog, self).__init__(parent)
+        self.selected_object_count = QtWidgets.QLabel("")
+        self.vbox.insertWidget(0, self.selected_object_count)
+
+
+class AttributeEditorSwitchDialog(AttributeEditorBaseDialog):
     def __init__(self, parent=None):
         super(AttributeEditorSwitchDialog, self).__init__(parent)
 

@@ -318,7 +318,8 @@ class PointTool(QgsMapTool):
             self.parent.table.setCellWidget(i, 0, label)
             self.parent.table.setCellWidget(i, 1, input_widget)
 
-        print("in display attrs 2")
+        if hasattr(self.parent, "selected_object_count"):
+            self.parent.selected_object_count.setText(f"Кол-во выбранных объектов: {len(features)}")
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
         if self.no_field_list:
