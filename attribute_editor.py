@@ -162,6 +162,9 @@ class PointTool(QgsMapTool):
     def display_attrs(self, features: List) -> None:
         """Takes feature list and display their attributes"""
 
+        layer_name = self.iface.activeLayer().name()
+        self.parent.setWindowTitle(f"Слой: {layer_name}")
+
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
         for feature in features:
@@ -187,7 +190,6 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-        layer_name = self.iface.activeLayer().name()
         if CLASSIFIER.get_layer_ref(layer_name) is None:
             widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
             self.iface.messageBar().pushWidget(widget, Qgis.Warning)
