@@ -195,6 +195,8 @@ class PointTool(QgsMapTool):
         readable_values = CLASSIFIER.get_readable_names()
         meta: dict[str] = CLASSIFIER.get_fields_meta(layer_name)
 
+        self.parent.table.setRowCount(len(data))
+
         # show attributes
         self.combo_box_list = []
         self.input_widget_list = []
@@ -310,11 +312,13 @@ class PointTool(QgsMapTool):
 
             input_widget.label = label
             self.input_widget_list.append(input_widget)
-            self.parent.table.setRowCount(self.parent.table.rowCount() + 1)
+            # self.parent.table.setRowCount(self.parent.table.rowCount() + 1)
+
             self.parent.table.setRowHeight(i, 4)
             self.parent.table.setCellWidget(i, 0, label)
             self.parent.table.setCellWidget(i, 1, input_widget)
 
+        print("in display attrs 2")
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
         if self.no_field_list:
