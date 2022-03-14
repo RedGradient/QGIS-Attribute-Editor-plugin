@@ -421,14 +421,27 @@ class PointTool(QgsMapTool):
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
 
         layer = self.iface.activeLayer()
-        with edit(layer):
-            for feature in layer.selectedFeatures():
-                # for feat_idx, new_value in new_attr_values.items():
-                layer.changeAttributeValues(feature.id(), new_attr_values)
-                if self.mode == "switch":
-                    index = self.mult_press_data["current_index"]
-                    self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
-                    self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
+        # with edit(layer):
+        #     for feature in layer.selectedFeatures():
+        #         # for feat_idx, new_value in new_attr_values.items():
+        #         layer.changeAttributeValues(feature.id(), new_attr_values)
+        #         if self.mode == "switch":
+        #             index = self.mult_press_data["current_index"]
+        #             self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
+        #             self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
+
+        edit_mode_was_active = layer.isEditable()
+        if not edit_mode_was_active:
+            layer.startEditing()
+        for feature in layer.selectedFeatures():
+            # for feat_idx, new_value in new_attr_values.items():
+            layer.changeAttributeValues(feature.id(), new_attr_values)
+            if self.mode == "switch":
+                index = self.mult_press_data["current_index"]
+                self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
+                self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
+        if not edit_mode_was_active:
+            layer.commitChanges()
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
