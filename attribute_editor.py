@@ -69,8 +69,20 @@ class PointTool(QgsMapTool):
             self.parent.ctrl_status.setText("CTRL не нажат")
 
     def canvasReleaseEvent(self, event):
+        print(event.pixelPoint().x(), event.pixelPoint().y())
+
+        radius = 1 / self.iface.mapCanvas().scale() * 10
+
+        a1 = QgsPointXY(round(event.mapPoint().x()), round(event.mapPoint().y()))
+        a2 = QgsPointXY(a1.x() + radius, a1.y())
+        a3 = QgsPointXY(a1.x(), a1.y() - radius)
+        a4 = QgsPointXY(a1.x() + radius, a1.y() - radius)
+
+        area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
+        print(area)
+
         point = QgsGeometry.fromPointXY(event.mapPoint())
-        pressed_features = self.get_features_in_geometry(point)
+        pressed_features = self.get_features_in_geometry(area)
         layer = self.iface.activeLayer()
 
         # these should be removed anyway
