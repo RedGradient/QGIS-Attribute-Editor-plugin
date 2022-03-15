@@ -43,7 +43,7 @@ class PointTool(QgsMapTool):
         if self.first_start:
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
-
+            self.parent.temp_tool.clicked.connect(self.on_temp_tool_clicked)
             if self.mode == "switch":
                 self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
                 self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
@@ -51,6 +51,10 @@ class PointTool(QgsMapTool):
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
+
+    def on_temp_tool_clicked(self):
+        layer = self.iface.activeLayer()
+        self.display_attrs(layer.selectedFeatures())
 
     def keyPressEvent(self, event):
         # if event.modifiers() & Qt.ControlModifier:
@@ -81,6 +85,7 @@ class PointTool(QgsMapTool):
                 if len(pressed_features) == 0:
                     self.parent.table.setRowCount(0)
                     self.input_widget_list = []
+                    self.parent.selected_object_count.setText("Кол-во выбранных объектов: 0")
                     return
         if self.mode == "switch":
             layer.removeSelection()

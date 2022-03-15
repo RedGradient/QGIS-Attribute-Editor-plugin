@@ -35,7 +35,16 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         self.selected_object_count = QtWidgets.QLabel("")
-        self.vbox.insertWidget(0, self.selected_object_count)
+        self.temp_tool = QtWidgets.QPushButton()
+        self.temp_tool.setText("Показать атрибуты")
+        self.up_hbox = QtWidgets.QHBoxLayout()
+        self.up_hbox.insertWidget(-1, self.selected_object_count)
+
+        # временное решение
+        self.up_hbox.insertWidget(-1, self.temp_tool)
+
+        # self.vbox.insertWidget(0, self.selected_object_count)
+        self.vbox.insertLayout(0, self.up_hbox)
 
 
 class AttributeEditorSwitchDialog(AttributeEditorBaseDialog):

@@ -7,25 +7,25 @@ name=Редактор атрибутов
 qgisMinimumVersion=3.0
 description=Просмотр и редактирование атрибутов объекта
 version=0.1
-author=Karo
-email=example@mail.com
+author=МКУ ЦИОГД
+# email=example@mail.core
 
-about=Редактирование атрибутов объекта
+about=Просмотр и редактирование атрибутов объекта
 
-tracker=http://bugs
-repository=http://repo
+# tracker=http://bugs
+# repository=http://repo
 # End of mandatory metadata
 
 # Recommended items:
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=Здесь должно быть описание изменеий
 
 # Tags are comma separated with spaces allowed
-tags=python
+# tags=python
 
-homepage=http://homepage
+# homepage=http://homepage
 category=Plugins
 icon=icon.png
 # experimental flag
