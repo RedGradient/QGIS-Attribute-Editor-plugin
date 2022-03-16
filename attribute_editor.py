@@ -187,7 +187,7 @@ class PointTool(QgsMapTool):
         """Takes feature list and display their attributes"""
 
         layer_name = self.iface.activeLayer().name()
-        self.parent.setWindowTitle(f"Слой: {layer_name}")
+        self.parent.setWindowTitle(f"{layer_name} — Слой")
 
         # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
         data = {}
