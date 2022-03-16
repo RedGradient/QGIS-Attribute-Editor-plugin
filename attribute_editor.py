@@ -43,10 +43,11 @@ class PointTool(QgsMapTool):
         if self.first_start:
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
-            self.parent.temp_tool.clicked.connect(self.on_temp_tool_clicked)
             if self.mode == "switch":
                 self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
                 self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
+            elif self.mode == "normal":
+                self.parent.temp_tool.clicked.connect(self.on_temp_tool_clicked)
 
             self.first_start = False
 
@@ -69,17 +70,23 @@ class PointTool(QgsMapTool):
             self.parent.ctrl_status.setText("CTRL не нажат")
 
     def canvasReleaseEvent(self, event):
-        print(event.pixelPoint().x(), event.pixelPoint().y())
+        print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
 
-        radius = 1 / self.iface.mapCanvas().scale() * 10
+        radius = 17
+        origin = event.pixelPoint()
 
-        a1 = QgsPointXY(round(event.mapPoint().x()), round(event.mapPoint().y()))
-        a2 = QgsPointXY(a1.x() + radius, a1.y())
-        a3 = QgsPointXY(a1.x(), a1.y() - radius)
-        a4 = QgsPointXY(a1.x() + radius, a1.y() - radius)
+        # алиас для длинной функции
+        toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
+        a1 = toMapCoordinates(origin.x() - radius / 2, origin.y() - radius / 2)
+        a2 = toMapCoordinates(origin.x() + radius / 2, origin.y() - radius / 2)
+        a3 = toMapCoordinates(origin.x() + radius / 2, origin.y() + radius / 2)
+        a4 = toMapCoordinates(origin.x() - radius / 2, origin.y() + radius / 2)
 
         area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
         print(area)
+
+        x = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates(origin.x(), origin.y())
+        print("Преобразованный:", x)
 
         point = QgsGeometry.fromPointXY(event.mapPoint())
         pressed_features = self.get_features_in_geometry(area)
