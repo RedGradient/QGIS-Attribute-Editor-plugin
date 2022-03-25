@@ -20,7 +20,7 @@ about=Просмотр и редактирование атрибутов объ
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=Здесь должно быть описание изменеий
+changelog=Здесь должно быть описание изменений
 
 # Tags are comma separated with spaces allowed
 # tags=python

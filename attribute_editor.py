@@ -77,10 +77,10 @@ class PointTool(QgsMapTool):
 
         # алиас для длинной функции
         toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
-        a1 = toMapCoordinates(origin.x() - radius / 2, origin.y() - radius / 2)
-        a2 = toMapCoordinates(origin.x() + radius / 2, origin.y() - radius / 2)
-        a3 = toMapCoordinates(origin.x() + radius / 2, origin.y() + radius / 2)
-        a4 = toMapCoordinates(origin.x() - radius / 2, origin.y() + radius / 2)
+        a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
+        a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
+        a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
+        a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
 
         area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
         print(area)
@@ -579,6 +579,8 @@ class AttributeEditor:
         self.switch_pressed = False
         self.normal_pressed = False
 
+        # print(os.path.realpath(__file__))
+
     # noinspection PyMethodMayBeStatic
     # def tr(self, message):
     #     """Get the translation for a string using Qt translation API.
@@ -673,6 +675,8 @@ class AttributeEditor:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ':/plugins/attribute_editor/icon.png'
+        # icon_path = './icon.png'
+        # icon_path = '/home/redgradient/PycharmProjects/QGIS-Attribute-Editor-plugin/new_icon.png'
 
         self.add_action(
             icon_path,
