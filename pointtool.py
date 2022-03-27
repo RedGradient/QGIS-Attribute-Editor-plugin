@@ -327,8 +327,8 @@ class PointTool(QgsMapTool):
                 continue
 
             input_widget.label = label
+            input_widget.layer = self.iface.activeLayer()
             self.input_widget_list.append(input_widget)
-            # self.parent.table.setRowCount(self.parent.table.rowCount() + 1)
 
             self.parent.table.setRowHeight(i, 4)
             self.parent.table.setCellWidget(i, 0, label)
@@ -437,7 +437,9 @@ class PointTool(QgsMapTool):
                 pass
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
 
-        layer = self.iface.activeLayer()
+        # layer = self.iface.activeLayer()
+        layer = self.input_widget_list[0].layer
+
         # with edit(layer):
         #     for feature in layer.selectedFeatures():
         #         # for feat_idx, new_value in new_attr_values.items():
