@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/plugins/attribute_editor">
         <file>icon.png</file>
-<!--        <file>new_icon.png</file>-->
+        <file>new_icon.png</file>
     </qresource>
 </RCC>
