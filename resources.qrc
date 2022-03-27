@@ -1,6 +1,8 @@
 <RCC>
     <qresource prefix="/plugins/attribute_editor">
-        <file>icon.png</file>
-        <file>new_icon.png</file>
+        <file>icons/icon.png</file>
+        <file>icons/new_icon.png</file>
+        <file>icons/normal_mode_icon.png</file>
+        <file>icons/switch_mode_icon.png</file>
     </qresource>
 </RCC>

@@ -6,7 +6,7 @@
 name=Редактор атрибутов
 qgisMinimumVersion=3.0
 description=Просмотр и редактирование атрибутов объекта
-version=0.1
+version=1.0
 author=МКУ ЦИОГД
 # email=example@mail.core
 
@@ -20,14 +20,14 @@ about=Просмотр и редактирование атрибутов объ
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=Здесь должно быть описание изменений
+# changelog=
 
 # Tags are comma separated with spaces allowed
 # tags=python
 
 # homepage=http://homepage
 category=Plugins
-icon=icon.png
+icon=icons/normal_mode_icon.png
 # experimental flag
 experimental=True
 
