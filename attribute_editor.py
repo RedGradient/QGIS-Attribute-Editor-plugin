@@ -23,7 +23,6 @@ class AttributeEditor:
             application at run time.
         :type iface: QgsInterface
         """
-        # Save reference to the QGIS interface
         self.iface = iface
 
         self.canvas = self.iface.mapCanvas()
@@ -31,28 +30,13 @@ class AttributeEditor:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
-        # initialize locale
-        # locale = QSettings().value('locale/userLocale')[0:2]
-        # locale_path = os.path.join(
-        #     self.plugin_dir,
-        #     'i18n',
-        #     'AttributeEditor_{}.qm'.format(locale))
-        #
-        # if os.path.exists(locale_path):
-        #     self.translator = QTranslator()
-        #     self.translator.load(locale_path)
-        #     QCoreApplication.installTranslator(self.translator)
-
-        # Declare instance attributes
         self.actions = []
         self.menu = "Редактор атрибутов"
-        # self.menu = self.tr(u'&Редактор атрибутов')
 
-        # Check if plugin was started the first time in current QGIS session
-        # Must be set in initGui() to survive plugin reloads
         self.mult_editor_first_start = None
         self.switch_editor_first_start = None
 
+        # справочник
         self.classifier = RequirementsProvider("/RS/RS.mixml")
 
         self.normal_dlg = None
@@ -60,23 +44,6 @@ class AttributeEditor:
 
         self.switch_pressed = False
         self.normal_pressed = False
-
-        # print(os.path.realpath(__file__))
-
-    # noinspection PyMethodMayBeStatic
-    # def tr(self, message):
-    #     """Get the translation for a string using Qt translation API.
-    #
-    #     We implement this ourselves since we do not inherit QObject.
-    #
-    #     :param message: String for translation.
-    #     :type message: str, QString
-    #
-    #     :returns: Translated version of message.
-    #     :rtype: QString
-    #     """
-    #     # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-    #     return QCoreApplication.translate('AttributeEditor', message)
 
     def add_action(
             self,
@@ -156,12 +123,7 @@ class AttributeEditor:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/attribute_editor/icon.png'
-        # icon_path = os.path.realpath(__file__) + '/../' + 'new_icon.png'
-        # print(icon_path)
-
-        # icon_path = './icon.png'
-        # icon_path = '/home/redgradient/PycharmProjects/QGIS-Attribute-Editor-plugin/new_icon.png'
+        icon_path = ':/plugins/attribute_editor/new_icon.png'
 
         self.add_action(
             icon_path,

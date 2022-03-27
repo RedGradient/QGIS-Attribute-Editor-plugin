@@ -36,7 +36,7 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
         super(AttributeEditorDialog, self).__init__(parent)
         self.selected_object_count = QtWidgets.QLabel("")
         self.temp_tool = QtWidgets.QPushButton()
-        self.temp_tool.setText("Показать атрибуты выделенных объектов")
+        self.temp_tool.setText("Показать атрибуты\nвыделенных объектов")
         self.up_hbox = QtWidgets.QHBoxLayout()
         self.up_hbox.insertWidget(-1, self.selected_object_count)
 
