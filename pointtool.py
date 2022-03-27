@@ -10,8 +10,9 @@ from .attribute_editor_dialog import *
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
-        """
-        :mode Can be 'normal' or 'switch'
+        """Constructor.
+
+        :param mode: Can be 'normal' or 'switch'
         """
         self.classifier = classifier
         self.parent = parent
