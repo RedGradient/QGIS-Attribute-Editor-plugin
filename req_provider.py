@@ -5,7 +5,14 @@ from xml.etree.ElementTree import Element
 
 
 class RequirementsProvider:
+    """Предоставляет функции для извлечения данных из справочника."""
     def __init__(self, path: str):
+        """
+        Конструктор.
+
+        :param path: Путь к файлу справочника. Пример: '/RS/RS.mixml'
+        :type path: str
+        """
         self.path = path
         self.classifier = ET.parse(os.path.dirname(__file__) + self.path)
 
@@ -89,6 +96,7 @@ if __name__ == '__main__':
     assert provider.get_layer_ref("Охранная_зона_трансп_коммун") == "Охранная_зона_трансп_коммун"
     assert provider.get_layer_ref("Тер_инвест_деятельности") == "Территории_инвест_деят"
 
+    # тестирование метода get_field_type
     # assert provider.get_field_type("Зем_участки", "Идентификатор_объекта") == "Char"
     # assert provider.get_field_type("Зем_участки", "Код_объекта") == "DirValue"
     # assert provider.get_field_type("Зем_участки", "Порядковый_номер") == "Int"

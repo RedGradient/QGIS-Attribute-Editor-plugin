@@ -7,8 +7,8 @@ from qgis.PyQt.QtWidgets import QWidget
 from qgis.gui import QgsMapToolPan
 
 from .resources import *
-from .PointTool import PointTool
-from .RequirementsProvider import RequirementsProvider
+from .pointtool import PointTool
+from .req_provider import RequirementsProvider
 from .attribute_editor_dialog import *
 
 
