@@ -62,7 +62,10 @@ class PointTool(QgsMapTool):
     def canvasReleaseEvent(self, event):
         # print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
 
-        if self.mode == "normal":
+        if self.mode == "normal" and self.iface.activeLayer().wkbType() == QgsWkbTypes.Polygon:
+            point = QgsGeometry.fromPointXY(event.mapPoint())
+            pressed_features = self.get_features_in_geometry(point)
+        else:
             radius = 17
             origin = event.pixelPoint()
 
@@ -76,9 +79,6 @@ class PointTool(QgsMapTool):
             area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
 
             pressed_features = self.get_features_in_geometry(area)
-        elif self.mode == "switch":
-            point = QgsGeometry.fromPointXY(event.mapPoint())
-            pressed_features = self.get_features_in_geometry(point)
 
         layer = self.iface.activeLayer()
 
@@ -416,21 +416,12 @@ class PointTool(QgsMapTool):
             объекту - виджету; обращение происходит на строчке current_attr_values.append(widget.text());
             ошибка на сохранение не влияет
             """
-            # if isinstance(widget, QLineEdit):
-            #     try:
-            #         current_attr_values.append(widget.text())
-            #     except RuntimeError:
-            #         pass
-            # elif isinstance(widget, QComboBox):
-            #     try:
-            #         current_attr_values.append(widget.currentText())
-            #     except RuntimeError:
-            #         pass
             try:
                 if isinstance(widget, QLineEdit):
                     current_attr_values.append(widget.text())
                 elif isinstance(widget, QComboBox):
                     current_attr_values.append(widget.currentText())
+                    widget.old_text = widget.currentText()
                 else:
                     raise Exception("Input widget has unknown type")
             except RuntimeError:
@@ -440,33 +431,27 @@ class PointTool(QgsMapTool):
         # layer = self.iface.activeLayer()
         layer = self.input_widget_list[0].layer
 
-        # with edit(layer):
-        #     for feature in layer.selectedFeatures():
-        #         # for feat_idx, new_value in new_attr_values.items():
-        #         layer.changeAttributeValues(feature.id(), new_attr_values)
-        #         if self.mode == "switch":
-        #             index = self.mult_press_data["current_index"]
-        #             self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
-        #             self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
-
         edit_mode_was_active = layer.isEditable()
         if not edit_mode_was_active:
             layer.startEditing()
+
         for feature in layer.selectedFeatures():
-            # for feat_idx, new_value in new_attr_values.items():
             layer.changeAttributeValues(feature.id(), new_attr_values)
             if self.mode == "switch":
                 index = self.mult_press_data["current_index"]
                 self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
                 self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
+
         if not edit_mode_was_active:
             layer.commitChanges()
+
+        # self.old_attr_values = current_attr_values
 
         self.parent.saveBtn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
-        def closure(index: int):
+        def closure(index: int) -> None:
             other_combo_box.setCurrentIndex(index)
             if combo_box.old_text != combo_box.currentText():
                 combo_box.label.setChanged(True)
