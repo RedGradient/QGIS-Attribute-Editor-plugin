@@ -31,6 +31,7 @@ class PointTool(QgsMapTool):
 
         # set callback at first start
         if self.first_start:
+            # print('Произошло присваивание коллбека событию save')
             self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
             if self.mode == "switch":
@@ -175,7 +176,6 @@ class PointTool(QgsMapTool):
 
     def display_attrs(self, features: List) -> None:
         """Takes feature list and display their attributes"""
-
         layer_name = self.iface.activeLayer().name()
         self.parent.setWindowTitle(f"{layer_name} — Слой")
 
@@ -410,33 +410,43 @@ class PointTool(QgsMapTool):
             return
 
         current_attr_values = []
-        for widget in self.input_widget_list:
+        # print('Длина self.input_widget_list при сохранении --', len(self.input_widget_list))
+        for i, widget in enumerate(self.input_widget_list):
             """
             при некоторых условиях (неизвестно, каких) возникает RuntimeError из-за обращения к удаленному C++ 
             объекту - виджету; обращение происходит на строчке current_attr_values.append(widget.text());
             ошибка на сохранение не влияет
             """
-            try:
-                if isinstance(widget, QLineEdit):
-                    current_attr_values.append(widget.text())
-                elif isinstance(widget, QComboBox):
-                    current_attr_values.append(widget.currentText())
-                    widget.old_text = widget.currentText()
-                else:
-                    raise Exception("Input widget has unknown type")
-            except RuntimeError:
-                pass
+            # try:
+            if isinstance(widget, QLineEdit):
+                current_attr_values.append(widget.text())
+                widget.old_text = widget.text()
+                # self.old_attr_values[i] = widget.text()
+            elif isinstance(widget, QComboBox):
+                current_attr_values.append(widget.currentText())
+                widget.old_text = widget.currentText()
+                # self.old_attr_values[i] = widget.currentText()
+            else:
+                raise Exception("Input widget has unknown type")
+            # except RuntimeError:
+            #     print('RuntimeError')
+                # pass
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
+        # print(new_attr_values)
 
         # layer = self.iface.activeLayer()
         layer = self.input_widget_list[0].layer
+
+        # ---
+        current_attr_values = dict(zip([i for i in range(len(current_attr_values))], current_attr_values))
+        # ---
 
         edit_mode_was_active = layer.isEditable()
         if not edit_mode_was_active:
             layer.startEditing()
 
         for feature in layer.selectedFeatures():
-            layer.changeAttributeValues(feature.id(), new_attr_values)
+            layer.changeAttributeValues(feature.id(), current_attr_values)
             if self.mode == "switch":
                 index = self.mult_press_data["current_index"]
                 self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])

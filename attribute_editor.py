@@ -33,8 +33,8 @@ class AttributeEditor:
         self.actions = []
         self.menu = "Редактор атрибутов"
 
-        self.mult_editor_first_start = None
-        self.switch_editor_first_start = None
+        self.mult_editor_first_start = True
+        self.switch_editor_first_start = True
 
         # справочник
         self.classifier = RequirementsProvider("/RS/RS.mixml")
@@ -167,12 +167,13 @@ class AttributeEditor:
             print("Активный слой не имеет геометрии")
             return
 
-        if self.switch_editor_first_start == True:
+        if self.switch_editor_first_start:
             self.switch_editor_first_start = False
             self.switch_dlg = AttributeEditorSwitchDialog()
             # self.switch_dlg.rejected.connect(self.on_switch_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             self.switch_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+            self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode="switch")
 
         if not self.actions[1].isChecked():
             self.canvas.setMapTool(QgsMapToolPan(self.canvas))
@@ -182,7 +183,7 @@ class AttributeEditor:
         self.actions[0].setChecked(False)
 
         # prelude
-        self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode="switch")
+        # self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode="switch")
         self.canvas.setMapTool(self.switch_map_tool)
 
     def run_normal_mode(self):
@@ -202,12 +203,13 @@ class AttributeEditor:
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.mult_editor_first_start == True:
+        if self.mult_editor_first_start:
             self.mult_editor_first_start = False
             self.normal_dlg = AttributeEditorDialog(parent=self.iface.mainWindow())
             # self.normal_dlg.rejected.connect(self.on_normal_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             # self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+            self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode="normal")
 
         # on de-check: close window & unset tool
         if not self.actions[0].isChecked():
@@ -217,7 +219,7 @@ class AttributeEditor:
             return
         self.actions[1].setChecked(False)
 
-        self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode="normal")
+        # self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode="normal")
         self.canvas.setMapTool(self.normal_map_tool)
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
