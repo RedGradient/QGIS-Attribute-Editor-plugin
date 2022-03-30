@@ -412,27 +412,16 @@ class PointTool(QgsMapTool):
         current_attr_values = []
         # print('Длина self.input_widget_list при сохранении --', len(self.input_widget_list))
         for i, widget in enumerate(self.input_widget_list):
-            """
-            при некоторых условиях (неизвестно, каких) возникает RuntimeError из-за обращения к удаленному C++ 
-            объекту - виджету; обращение происходит на строчке current_attr_values.append(widget.text());
-            ошибка на сохранение не влияет
-            """
-            # try:
+
             if isinstance(widget, QLineEdit):
                 current_attr_values.append(widget.text())
-                widget.old_text = widget.text()
-                # self.old_attr_values[i] = widget.text()
             elif isinstance(widget, QComboBox):
                 current_attr_values.append(widget.currentText())
-                widget.old_text = widget.currentText()
-                # self.old_attr_values[i] = widget.currentText()
             else:
                 raise Exception("Input widget has unknown type")
-            # except RuntimeError:
-            #     print('RuntimeError')
-                # pass
+
         new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
-        # print(new_attr_values)
+        print(new_attr_values)
 
         # layer = self.iface.activeLayer()
         layer = self.input_widget_list[0].layer
@@ -445,8 +434,10 @@ class PointTool(QgsMapTool):
         if not edit_mode_was_active:
             layer.startEditing()
 
+        # print(current_attr_values)
+
         for feature in layer.selectedFeatures():
-            layer.changeAttributeValues(feature.id(), current_attr_values)
+            layer.changeAttributeValues(feature.id(), new_attr_values)
             if self.mode == "switch":
                 index = self.mult_press_data["current_index"]
                 self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
@@ -464,6 +455,7 @@ class PointTool(QgsMapTool):
         def closure(index: int) -> None:
             other_combo_box.setCurrentIndex(index)
             if combo_box.old_text != combo_box.currentText():
+                print('current index changed -- old, current', combo_box.old_text, combo_box.currentText())
                 combo_box.label.setChanged(True)
                 self.parent.saveBtn.setEnabled(True)
                 # self.parent.resetChangesBtn.setEnabled(True)
