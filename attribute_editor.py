@@ -7,6 +7,7 @@ from qgis.PyQt.QtWidgets import QWidget
 from qgis.gui import QgsMapToolPan
 
 from .resources import *
+from .test import test_A
 from .pointtool import PointTool
 from .req_provider import RequirementsProvider
 from .attribute_editor_dialog import *
@@ -142,6 +143,14 @@ class AttributeEditor:
             parent=self.iface.mainWindow()
         )
 
+        # ----- tests ------
+        self.add_action(
+            ':/plugins/attribute_editor/icons/icon.png',
+            text="Test",
+            callback=self.run_tests,
+            parent=self.iface.mainWindow()
+        )
+
         # will be set False in run()
         self.mult_editor_first_start = True
         self.switch_editor_first_start = True
@@ -244,6 +253,10 @@ class AttributeEditor:
         # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
         # return
         # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
+
+    def run_tests(self):
+
+        test_A()
 
     def on_switch_dlg_rejected(self):
         self.canvas.setMapTool(QgsMapToolPan(self.canvas))
