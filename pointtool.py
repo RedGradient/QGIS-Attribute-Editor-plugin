@@ -63,6 +63,18 @@ class PointTool(QgsMapTool):
     def canvasReleaseEvent(self, event):
         # print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
 
+        # radius = 17
+        # origin = event.pixelPoint()
+        # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
+        # a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
+        # a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
+        # a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
+        # a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
+
+        # area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
+        # print('origin:', origin)
+        # print(area)
+
         if self.mode == "normal" and self.iface.activeLayer().wkbType() == QgsWkbTypes.Polygon:
             point = QgsGeometry.fromPointXY(event.mapPoint())
             pressed_features = self.get_features_in_geometry(point)
@@ -78,7 +90,7 @@ class PointTool(QgsMapTool):
             a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
 
             area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-
+            print(area)
             pressed_features = self.get_features_in_geometry(area)
 
         layer = self.iface.activeLayer()
@@ -151,13 +163,21 @@ class PointTool(QgsMapTool):
         # get active layer
         layer = self.iface.activeLayer()
 
+        source_crs = layer.sourceCrs()
+        dest_crs = QgsProject.instance().crs()
+
+        transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
+
         # list of found features
         result = []
 
         # iterate over features in the layer to find features that intersect the point
         layer_features = layer.getFeatures()
         for feature in layer_features:
-            if geometry.intersects(feature.geometry()):
+            feature_geometry = feature.geometry()
+            feature_geometry.transform(transform)
+            if geometry.intersects(feature_geometry):
+                print(feature_geometry)
                 result.append(feature)
 
         return result
