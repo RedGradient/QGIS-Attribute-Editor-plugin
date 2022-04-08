@@ -62,7 +62,7 @@ class PointTool(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         # print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
-
+        # TODO QgsMapCanvas.mapToolSet | args: newTool, oldTool
         # radius = 17
         # origin = event.pixelPoint()
         # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
@@ -90,7 +90,7 @@ class PointTool(QgsMapTool):
             a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
 
             area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-            print(area)
+            # print(area)
             pressed_features = self.get_features_in_geometry(area)
 
         layer = self.iface.activeLayer()
@@ -177,7 +177,7 @@ class PointTool(QgsMapTool):
             feature_geometry = feature.geometry()
             feature_geometry.transform(transform)
             if geometry.intersects(feature_geometry):
-                print(feature_geometry)
+                # print(feature_geometry)
                 result.append(feature)
 
         return result
@@ -224,9 +224,41 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
+
+        self.save_btn_always_active = False
+        # if layer is not in requirement system
         if self.classifier.get_layer_ref(layer_name) is None:
+
+            self.parent.table.setRowCount(len(data))
+
             widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
             self.iface.messageBar().pushWidget(widget, Qgis.Warning)
+
+            self.combo_box_list = []
+            self.input_widget_list = []
+            for i, item in enumerate(data.items()):
+                label = CustomLabel(item[0])
+
+                input_widget = CustomLineEdit()
+                if item[1] in ['-', '***']:
+                    input_widget.setPlaceholderText(str(item[1]))
+                    self.old_attr_values.append('')
+                    input_widget.old_text = ''
+                else:
+                    input_widget.setText(item[1])
+                    self.old_attr_values.append(str(item[1]))
+                    input_widget.old_text = item[1]
+
+                input_widget.label = label
+                input_widget.layer = self.iface.activeLayer()
+                self.input_widget_list.append(input_widget)
+
+                self.parent.table.setRowHeight(i, 4)
+                self.parent.table.setCellWidget(i, 0, label)
+                self.parent.table.setCellWidget(i, 1, input_widget)
+
+                self.parent.saveBtn.setEnabled(True)
+
             return
         readable_values = self.classifier.get_readable_names()
         meta: dict[str] = self.classifier.get_fields_meta(layer_name)
