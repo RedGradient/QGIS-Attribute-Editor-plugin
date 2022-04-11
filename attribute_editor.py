@@ -33,17 +33,29 @@ class AttributeEditor:
         self.actions = []
         self.menu = "Редактор атрибутов"
 
+        # инструмент: первый запуск?
         self.mult_editor_first_start = True
         self.switch_editor_first_start = True
+
+        # событие: снимаем нажатие с инструмента PointTool, если был выбран другой инструмент
+        self.iface.mapCanvas().mapToolSet.connect(self.on_mapToolSet)
 
         # справочник
         self.classifier = RequirementsProvider("/RS/RS.mixml")
 
+        # окна
         self.normal_dlg = None
         self.switch_dlg = None
 
+        # кнопки инструментов: нажаты или нет
         self.switch_pressed = False
         self.normal_pressed = False
+
+    def on_mapToolSet(self, new, old):
+        """Снимает нажатие с инструмента PointTool, если был выбран другой инструмент"""
+        if isinstance(old, PointTool) and not isinstance(new, PointTool):
+            for action in self.actions:
+                action.setChecked(False)
 
     def add_action(
             self,
