@@ -20,12 +20,12 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
         self.vbox = QtWidgets.QVBoxLayout()
 
         self.table = CustomTableWidget()
-        self.saveBtn = QtWidgets.QPushButton("Сохранить")
-        self.saveBtn.setEnabled(False)
+        self.save_btn = QtWidgets.QPushButton("Сохранить")
+        self.save_btn.setEnabled(False)
         self.ctrl_status = QtWidgets.QLabel("CTRL не нажат")
         self.vbox.insertWidget(-1, self.ctrl_status)
         self.vbox.insertWidget(-1, self.table)
-        self.vbox.insertWidget(-1, self.saveBtn)
+        self.vbox.insertWidget(-1, self.save_btn)
 
         self.setLayout(self.vbox)
 
@@ -35,13 +35,13 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         self.selected_object_count = QtWidgets.QLabel("")
-        self.temp_tool = QtWidgets.QPushButton()
-        self.temp_tool.setText("Показать атрибуты\nвыделенных объектов")
+        self.update_btn = QtWidgets.QPushButton()
+        self.update_btn.setText("Обновить")
         self.up_hbox = QtWidgets.QHBoxLayout()
         self.up_hbox.insertWidget(-1, self.selected_object_count)
 
         # временное решение
-        self.up_hbox.insertWidget(-1, self.temp_tool)
+        self.up_hbox.insertWidget(-1, self.update_btn)
 
         # self.vbox.insertWidget(0, self.selected_object_count)
         self.vbox.insertLayout(0, self.up_hbox)

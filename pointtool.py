@@ -32,19 +32,19 @@ class PointTool(QgsMapTool):
         # set callback at first start
         if self.first_start:
             # print('Произошло присваивание коллбека событию save')
-            self.parent.saveBtn.clicked.connect(self.on_saveBtn_clicked)
+            self.parent.save_btn.clicked.connect(self.on_save_btn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
             if self.mode == "switch":
                 self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
                 self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
             elif self.mode == "normal":
-                self.parent.temp_tool.clicked.connect(self.on_temp_tool_clicked)
+                self.parent.update_btn.clicked.connect(self.on_update_btn_clicked)
 
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
 
-    def on_temp_tool_clicked(self):
+    def on_update_btn_clicked(self):
         layer = self.iface.activeLayer()
         self.display_attrs(layer.selectedFeatures())
 
@@ -107,7 +107,7 @@ class PointTool(QgsMapTool):
                 if len(pressed_features) == 0:
                     self.parent.table.setRowCount(0)
                     self.input_widget_list = []
-                    self.parent.selected_object_count.setText("Кол-во выбранных объектов: 0")
+                    self.parent.selected_object_count.setText("Выбрано объектов: 0")
                     return
         if self.mode == "switch":
             layer.removeSelection()
@@ -257,7 +257,7 @@ class PointTool(QgsMapTool):
                 self.parent.table.setCellWidget(i, 0, label)
                 self.parent.table.setCellWidget(i, 1, input_widget)
 
-                self.parent.saveBtn.setEnabled(True)
+                self.parent.save_btn.setEnabled(True)
 
             return
         readable_values = self.classifier.get_readable_names()
@@ -387,8 +387,8 @@ class PointTool(QgsMapTool):
             self.parent.table.setCellWidget(i, 1, input_widget)
 
         if hasattr(self.parent, "selected_object_count"):
-            self.parent.selected_object_count.setText(f"Кол-во выбранных объектов: {len(features)}")
-        self.parent.saveBtn.setEnabled(False)
+            self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
+        self.parent.save_btn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
         if self.no_field_list:
             widget = self.iface.messageBar().createMessage(
@@ -433,7 +433,7 @@ class PointTool(QgsMapTool):
         def closure():
             if lineEdit.old_text != lineEdit.text():
                 lineEdit.label.setChanged(True)
-                self.parent.saveBtn.setEnabled(True)
+                self.parent.save_btn.setEnabled(True)
                 if lineEdit not in self.changed_inputs:
                     self.changed_inputs.append(lineEdit)
             else:
@@ -441,7 +441,7 @@ class PointTool(QgsMapTool):
                 if lineEdit in self.changed_inputs:
                     self.changed_inputs.remove(lineEdit)
                 if len(self.changed_inputs) == 0:
-                    self.parent.saveBtn.setEnabled(False)
+                    self.parent.save_btn.setEnabled(False)
 
         return closure
 
@@ -456,7 +456,7 @@ class PointTool(QgsMapTool):
                 result[index] = new
         return result
 
-    def on_saveBtn_clicked(self) -> None:
+    def on_save_btn_clicked(self) -> None:
         """Saves changed attributes"""
         if not self.input_widget_list:
             return
@@ -500,7 +500,7 @@ class PointTool(QgsMapTool):
 
         # self.old_attr_values = current_attr_values
 
-        self.parent.saveBtn.setEnabled(False)
+        self.parent.save_btn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
@@ -509,7 +509,7 @@ class PointTool(QgsMapTool):
             if combo_box.old_text != combo_box.currentText():
                 print('current index changed -- old, current', combo_box.old_text, combo_box.currentText())
                 combo_box.label.setChanged(True)
-                self.parent.saveBtn.setEnabled(True)
+                self.parent.save_btn.setEnabled(True)
                 # self.parent.resetChangesBtn.setEnabled(True)
                 if combo_box not in self.changed_inputs:
                     self.changed_inputs.append(combo_box)
@@ -518,7 +518,7 @@ class PointTool(QgsMapTool):
                 if combo_box in self.changed_inputs:
                     self.changed_inputs.remove(combo_box)
                 if len(self.changed_inputs) == 0:
-                    self.parent.saveBtn.setEnabled(False)
+                    self.parent.save_btn.setEnabled(False)
                     # self.parent.resetChangesBtn.setEnabled(False)
 
         return closure
@@ -541,7 +541,7 @@ class PointTool(QgsMapTool):
             widget.label.setChanged(False)
 
         self.parent.resetChangesBtn.setEnabled(False)
-        self.parent.saveBtn.setEnabled(False)
+        self.parent.save_btn.setEnabled(False)
 
     @staticmethod
     def is_correct(item: str, choice: List) -> bool:
