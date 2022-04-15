@@ -215,7 +215,7 @@ class PointTool(QgsMapTool):
                 data[key] = str(list(distinct_attrs)[0])
 
 
-        self.save_btn_always_active = False
+        # self.save_btn_always_active = False
         # if layer is not in requirement system
         if self.classifier.get_layer_ref(layer_name) is None:
 
