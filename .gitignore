@@ -1,0 +1,16 @@
+/zip_build/!README.txt
+/zip_build/attribute_editor/__init__.py
+/zip_build/attribute_editor/attribute_editor.py
+/zip_build/attribute_editor.zip
+/zip_build/attribute_editor/attribute_editor_dialog.py
+/zip_build/attribute_editor/attribute_editor_dialog_base.ui
+/zip_build/attribute_editor/RS/classifier.grq
+/zip_build/attribute_editor/feature_selector_dialog_base.py
+/zip_build/attribute_editor/feature_selector_dialog_base.ui
+/zip_build/attribute_editor/icon.png
+/zip_build/attribute_editor/metadata.txt
+/zip_build/attribute_editor/new_icon.png
+/zip_build/attribute_editor/PointTool.py
+/zip_build/attribute_editor/RequirementsProvider.py
+/zip_build/attribute_editor/resources.py
+/zip_build/attribute_editor/RS/RS.mixml
