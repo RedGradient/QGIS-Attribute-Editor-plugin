@@ -30,8 +30,6 @@ class PointTool(QgsMapTool):
 
         self.mult_press_data = {"pressed_list": [], "current_index": 0}
 
-        self.ctrl_pressed = False
-
         # задаем обратные вызовы при первом старте
         if self.first_start:
             self.parent.save_btn.clicked.connect(self.on_save_btn_clicked)
@@ -52,18 +50,6 @@ class PointTool(QgsMapTool):
     def on_update_btn_clicked(self):
         layer = self.iface.activeLayer()
         self.display_attrs(layer.selectedFeatures())
-
-    def keyPressEvent(self, event):
-        # if event.modifiers() & Qt.ControlModifier:
-        if event.key() == Qt.Key_Control:
-            self.ctrl_pressed = True
-            self.parent.ctrl_status.setText("CTRL нажат")
-
-    def keyReleaseEvent(self, event):
-        # if event.modifiers() & Qt.ControlModifier:
-        if event.key() == Qt.Key_Control:
-            self.ctrl_pressed = False
-            self.parent.ctrl_status.setText("CTRL не нажат")
 
     def canvasReleaseEvent(self, event):
         # print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
@@ -105,15 +91,12 @@ class PointTool(QgsMapTool):
         self.old_attr_values = []
         self.changed_inputs = []
 
-        # support selection with ctrl
-        if self.mode == "normal":
-            if not self.ctrl_pressed:
-                layer.removeSelection()
-                if len(pressed_features) == 0:
-                    self.parent.table.setRowCount(0)
-                    self.input_widget_list = []
-                    self.parent.selected_object_count.setText("Выбрано объектов: 0")
-                    return
+        layer.removeSelection()
+        if len(pressed_features) == 0:
+            self.parent.table.setRowCount(0)
+            self.input_widget_list = []
+            self.parent.selected_object_count.setText("Выбрано объектов: 0")
+            return
         if self.mode == "switch":
             layer.removeSelection()
 

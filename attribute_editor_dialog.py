@@ -14,7 +14,6 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(AttributeEditorBaseDialog, self).__init__(parent)
-        # self.setupUi(self)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setGeometry(0, 0, 500, 600)
         self.vbox = QtWidgets.QVBoxLayout()
@@ -22,8 +21,6 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
         self.table = CustomTableWidget()
         self.save_btn = QtWidgets.QPushButton("Сохранить")
         self.save_btn.setEnabled(False)
-        self.ctrl_status = QtWidgets.QLabel("CTRL не нажат")
-        self.vbox.insertWidget(-1, self.ctrl_status)
         self.vbox.insertWidget(-1, self.table)
         self.vbox.insertWidget(-1, self.save_btn)
 
