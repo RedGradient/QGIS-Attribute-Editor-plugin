@@ -10,35 +10,40 @@ from .attribute_editor_dialog import *
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
-        """Constructor.
+        """Конструктор.
 
-        :param mode: Can be 'normal' or 'switch'
+        :param mode: Может быть 'normal' или 'switch'
         """
-        self.classifier = classifier
-        self.parent = parent
+        self.classifier = classifier    # система требований
+        self.parent = parent            # ссылка на QDialog
         self.iface = iface
-        # self.provider = RequirementsProvider("/RS/RS.mixml")
+
+        # храним значения старых атрибутов
+        # это нужно, чтобы уметь отличить новые атрибуты и выделить их жирным
         self.old_attr_values = []
-        self.input_widget_list = []  # needs for saving
-        self.first_start = True
-        self.changed_inputs = []
-        self.combo_box_list = []
-        self.mode = mode
+
+        self.input_widget_list = []     # needs for saving
+        self.first_start = True         # флаг первого запуска
+        self.changed_inputs = []        # отслеживаем только измененные input-ы
+        self.combo_box_list = []        # список QComboBox-ов
+        self.mode = mode                # режим инструмента
 
         self.mult_press_data = {"pressed_list": [], "current_index": 0}
 
         self.ctrl_pressed = False
 
-        # set callback at first start
+        # задаем обратные вызовы при первом старте
         if self.first_start:
-            # print('Произошло присваивание коллбека событию save')
             self.parent.save_btn.clicked.connect(self.on_save_btn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
-            if self.mode == "switch":
+            if self.mode == "normal":
+                self.parent.update_btn.clicked.connect(self.on_update_btn_clicked)
+            elif self.mode == "switch":
+                # обратные вызовы для кнопок вправо-влево
                 self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
                 self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
-            elif self.mode == "normal":
-                self.parent.update_btn.clicked.connect(self.on_update_btn_clicked)
+            else:
+                raise Exception(f'Неизвестный режим инструмента: {self.mode}')
 
             self.first_start = False
 
