@@ -33,7 +33,7 @@ class AttributeEditor:
         self.actions = []
         self.menu = "Редактор атрибутов"
 
-        # инструмент: первый запуск?
+        # инструмент: флаг первого запуска
         self.mult_editor_first_start = True
         self.switch_editor_first_start = True
 
