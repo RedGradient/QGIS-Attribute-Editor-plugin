@@ -22,12 +22,14 @@ class PointTool(QgsMapTool):
         # это нужно, чтобы уметь отличить новые атрибуты и выделить их жирным
         self.old_attr_values = []
 
-        self.input_widget_list = []     # needs for saving
+        self.input_widget_list = []     # список input-ов
         self.first_start = True         # флаг первого запуска
         self.changed_inputs = []        # отслеживаем только измененные input-ы
         self.combo_box_list = []        # список QComboBox-ов
         self.mode = mode                # режим инструмента
 
+        # используется для режима переключения
+        # храним список объектов, по которым будем переключаться
         self.mult_press_data = {"pressed_list": [], "current_index": 0}
 
         # задаем обратные вызовы при первом старте
