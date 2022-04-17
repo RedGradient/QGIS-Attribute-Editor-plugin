@@ -89,7 +89,7 @@ class CustomLineEdit(QtWidgets.QLineEdit):
         self.setStyleSheet("border: 0px")
         # self.setMinimumWidth(100)
 
-    def setDangerStyle(self) -> None:
+    def setWarnStyle(self) -> None:
         self.setStyleSheet("background-color: #ffcc00")
 
     def setNormalStyle(self) -> None:
