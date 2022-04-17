@@ -551,7 +551,7 @@ class PointTool(QgsMapTool):
     def show_invalid_inputs(self, lineEdit: QLineEdit, choice: List) -> None:
         text = lineEdit.text()
         if not self.is_correct(text, choice):
-            lineEdit.setDangerStyle()
+            lineEdit.setWarnStyle()
         else:
             lineEdit.setNormalStyle()
 
