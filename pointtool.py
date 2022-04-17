@@ -7,6 +7,11 @@ from qgis.gui import QgsMapTool
 
 from .attribute_editor_dialog import *
 
+# TODO: цветовая дифференциация строк
+# TODO: упростить создание полигона вокруг точки нажатия
+# TODO: использовать датаклассы?
+# TODO: повторное сохранение не закрывая диалог
+# TODO: упростить 
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
