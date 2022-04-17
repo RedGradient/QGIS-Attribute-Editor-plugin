@@ -220,20 +220,17 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
-
-        # self.save_btn_always_active = False
-        # if layer is not in requirement system
         if self.classifier.get_layer_ref(layer_name) is None:
 
             self.parent.table.setRowCount(len(data))
 
-            widget = self.iface.messageBar().createMessage("Ошибка", "Слой не найден в системе требований")
-            self.iface.messageBar().pushWidget(widget, Qgis.Warning)
+            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не подсвечиваются")
+            self.iface.messageBar().pushWidget(widget, Qgis.Info)
 
             self.combo_box_list = []
             self.input_widget_list = []
             for i, item in enumerate(data.items()):
-                label = CustomLabel(item[0])
+                label = CustomTableItem(item[0])
 
                 input_widget = CustomLineEdit()
                 if item[1] in ['-', '***']:
@@ -249,13 +246,14 @@ class PointTool(QgsMapTool):
                 input_widget.layer = self.iface.activeLayer()
                 self.input_widget_list.append(input_widget)
 
-                self.parent.table.setRowHeight(i, 4)
-                self.parent.table.setCellWidget(i, 0, label)
-                self.parent.table.setCellWidget(i, 1, input_widget)
-
+                self.parent.table.addRow(i, label, input_widget)
                 self.parent.save_btn.setEnabled(True)
 
+            if hasattr(self.parent, "selected_object_count"):
+                self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
+
             return
+
         readable_values = self.classifier.get_readable_names()
         meta: dict[str] = self.classifier.get_fields_meta(layer_name)
 
@@ -384,7 +382,7 @@ class PointTool(QgsMapTool):
             input_widget.layer = self.iface.activeLayer()
             self.input_widget_list.append(input_widget)
 
-            self.parent.table.appendRow(i, label, input_widget)
+            self.parent.table.addRow(i, label, input_widget)
 
         if hasattr(self.parent, "selected_object_count"):
             self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")

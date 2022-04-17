@@ -139,7 +139,7 @@ class CustomTableWidget(QtWidgets.QTableWidget):
         self.setHorizontalHeaderLabels(["Атрибут", "Значение"])
         self.verticalHeader().setVisible(False)
 
-    def appendRow(self, row_index, label, input_widget):
+    def addRow(self, row_index, label, input_widget):
         color = QColor()
 
         if isinstance(input_widget, QtWidgets.QComboBox):
