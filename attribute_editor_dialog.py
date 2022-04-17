@@ -4,6 +4,7 @@ import os
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor, QFont
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -20,6 +21,7 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
 
         self.table = CustomTableWidget()
         self.save_btn = QtWidgets.QPushButton("Сохранить")
+        self.save_btn.setStyleSheet('padding: 5px')
         self.save_btn.setEnabled(False)
         self.vbox.insertWidget(-1, self.table)
         self.vbox.insertWidget(-1, self.save_btn)
@@ -32,15 +34,21 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         self.selected_object_count = QtWidgets.QLabel("")
-        self.update_btn = QtWidgets.QPushButton()
-        self.update_btn.setText("Обновить")
+        self.update_btn = QtWidgets.QPushButton("Обновить")
+        self.update_btn.setStyleSheet('padding: 5px; padding-left: 15px; padding-right: 15px')
+        self.hspacer = QtWidgets.QSpacerItem(
+            0, 0,
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Minimum
+        )
         self.up_hbox = QtWidgets.QHBoxLayout()
         self.up_hbox.insertWidget(-1, self.selected_object_count)
 
-        # временное решение
+        self.up_hbox.addItem(self.hspacer)
+
+        # кнопка обновить
         self.up_hbox.insertWidget(-1, self.update_btn)
 
-        # self.vbox.insertWidget(0, self.selected_object_count)
         self.vbox.insertLayout(0, self.up_hbox)
 
 
@@ -82,7 +90,7 @@ class CustomLineEdit(QtWidgets.QLineEdit):
         # self.setMinimumWidth(100)
 
     def setDangerStyle(self) -> None:
-        self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
+        self.setStyleSheet("background-color: #ffcc00")
 
     def setNormalStyle(self) -> None:
         self.setStyleSheet("")
@@ -103,40 +111,85 @@ class CustomComboBox(QtWidgets.QComboBox):
         self.setEditable(True)
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
         self.setStyleSheet("QComboBox { border: 0px }")
-        # "QComboBox QAbstractItemView { background-color: rgb(248, 248, 255) }"
-        # self.setStyleSheet("border: 0px; QComboBox QAbstractItemView {border: 2px solid red;}")
 
-    def setDangerStyle(self) -> None:
-        self.setStyleSheet("color: white; background-color: rgb(237, 82, 73)")
-
-    def setNormalStyle(self) -> None:
-        self.setStyleSheet("")
+    # def setDangerStyle(self) -> None:
+    #     self.setStyleSheet("color: white; background-color: #ffcc00")
+    #
+    # def setNormalStyle(self) -> None:
+    #     self.setStyleSheet("")
 
 
 class CustomTableWidget(QtWidgets.QTableWidget):
     def __init__(self, parent=None) -> None:
         super(CustomTableWidget, self).__init__(parent)
-        # self.resizeEvent = self.onResize
+
+        self.setFocusPolicy(Qt.NoFocus)
+
+        # цвета зебры и индекс последнего цвета
+        self._colors = ('#ffffff', '#f7f7f7')
+        self._color_index = 1
+
+        self._combo_counter = 0
+
+        # флаг
+        self.next_has_same_color = False
 
         self.setColumnCount(2)
         self.horizontalHeader().setStretchLastSection(True)
         self.setHorizontalHeaderLabels(["Атрибут", "Значение"])
-        # self.setColumnWidth(1, self.geometry().width() - 2 * self.columnWidth(0))
-        # self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
-        # self.setStyleSheet("background-color: rgb(248, 248, 255)")
+
+    def appendRow(self, row_index, label, input_widget):
+        color = QColor()
+
+        if isinstance(input_widget, QtWidgets.QComboBox):
+            if self._combo_counter == 0:
+                # индекс следующего цвета
+                next_color_index = int(not self._color_index)
+                # запоминаем этот индекс
+                self._color_index = next_color_index
+                # создаем QColor
+                color.setNamedColor(self._colors[next_color_index])
+
+                self._combo_counter = 1
+            elif self._combo_counter == 1:
+                # создаем QColor
+                color.setNamedColor(self._colors[self._color_index])
+
+                self._combo_counter = 0
+        else:
+            # индекс следующего цвета
+            next_color_index = int(not self._color_index)
+            # запоминаем этот индекс
+            self._color_index = next_color_index
+            # создаем QColor
+            color.setNamedColor(self._colors[next_color_index])
+
+        label.setBackground(color)
+
+        input_widget.setProperty('background', self._colors[self._color_index])
+
+        self.setRowHeight(row_index, 4)
+        self.setItem(row_index, 0, label)
+        self.setCellWidget(row_index, 1, input_widget)
 
 
-class CustomLabel(QtWidgets.QLabel):
+class CustomTableItem(QtWidgets.QTableWidgetItem):
     def __init__(self, parent=None) -> None:
-        super(CustomLabel, self).__init__(parent)
-        self.setStyleSheet("padding-left: 10px")
+        super(CustomTableItem, self).__init__(parent)
+        # self.setStyleSheet("padding-left: 10px")
 
     def setChanged(self, changed) -> None:
-        if changed:
-            self.setStyleSheet("padding-left: 10px; font-weight: bold;")
-        else:
-            self.setStyleSheet("padding-left: 10px; font-weight: normal;")
+        font = QFont()
+        font.setBold(True) if changed else font.setBold(False)
+        self.setFont(font)
+
+        # if changed:
+        #     self.setStyleSheet("padding-left: 10px; font-weight: bold;")
+        # else:
+        #     self.setStyleSheet("padding-left: 10px; font-weight: normal;")
+
+
 
 
 class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):

@@ -2,6 +2,7 @@
 from typing import *
 
 from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
+from qgis.PyQt.QtGui import QIntValidator
 from qgis.core import *
 from qgis.gui import QgsMapTool
 
@@ -32,6 +33,8 @@ class PointTool(QgsMapTool):
         self.changed_inputs = []        # отслеживаем только измененные input-ы
         self.combo_box_list = []        # список QComboBox-ов
         self.mode = mode                # режим инструмента
+
+        self.no_field_list = []
 
         # используется для режима переключения
         # храним список объектов, по которым будем переключаться
@@ -265,8 +268,9 @@ class PointTool(QgsMapTool):
         self.input_widget_list = []
         self.no_field_list = []
         for i, item in enumerate(data.items()):
-            label = CustomLabel(item[0])
-            # input_widget = QWidget()
+            label = CustomTableItem()
+            label.setText(item[0])
+            label.setBackground(Qt.lightGray)
 
             field_data = meta.get(item[0])
             if field_data is not None:
@@ -277,6 +281,11 @@ class PointTool(QgsMapTool):
 
             if field_type in ["Char", "Int", "Decimal", "Date"]:
                 input_widget = CustomLineEdit()
+
+                # если тип атрибута 'Int', устанавливаем Int валидатор
+                if field_type == 'Int':
+                    input_widget.setValidator(QIntValidator())
+
                 if item[1] in ['-', '***']:
                     input_widget.setPlaceholderText(str(item[1]))
                     self.old_attr_values.append('')
@@ -377,14 +386,11 @@ class PointTool(QgsMapTool):
             input_widget.layer = self.iface.activeLayer()
             self.input_widget_list.append(input_widget)
 
-            self.parent.table.setRowHeight(i, 4)
-            self.parent.table.setCellWidget(i, 0, label)
-            self.parent.table.setCellWidget(i, 1, input_widget)
+            self.parent.table.appendRow(i, label, input_widget)
 
         if hasattr(self.parent, "selected_object_count"):
             self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
         self.parent.save_btn.setEnabled(False)
-        # self.parent.resetChangesBtn.setEnabled(False)
         if self.no_field_list:
             widget = self.iface.messageBar().createMessage(
                 "Следующие атрибуты не показаны, т.к. отсутствуют в системе требований",
