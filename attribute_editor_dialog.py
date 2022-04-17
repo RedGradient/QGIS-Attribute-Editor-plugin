@@ -4,14 +4,10 @@ import os
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor, QFont
-
-# This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'attribute_editor_dialog_base.ui'))
+from qgis.PyQt.QtGui import QColor, QFont, QIcon
 
 
-class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
+class AttributeEditorBaseDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         """Constructor."""
         super(AttributeEditorBaseDialog, self).__init__(parent)
@@ -20,7 +16,10 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog, FORM_CLASS):
         self.vbox = QtWidgets.QVBoxLayout()
 
         self.table = CustomTableWidget()
-        self.save_btn = QtWidgets.QPushButton("Сохранить")
+
+        self.save_btn = QtWidgets.QPushButton(" Сохранить")
+        self.save_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/save-icon.svg'))
+
         self.save_btn.setStyleSheet('padding: 5px')
         self.save_btn.setEnabled(False)
         self.vbox.insertWidget(-1, self.table)
@@ -34,7 +33,8 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
         """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
         self.selected_object_count = QtWidgets.QLabel("")
-        self.update_btn = QtWidgets.QPushButton("Обновить")
+        self.update_btn = QtWidgets.QPushButton(" Обновить")
+        self.update_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/refresh.svg'))
         self.update_btn.setStyleSheet('padding: 5px; padding-left: 15px; padding-right: 15px')
         self.hspacer = QtWidgets.QSpacerItem(
             0, 0,
