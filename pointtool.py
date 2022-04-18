@@ -93,7 +93,6 @@ class PointTool(QgsMapTool):
             a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
 
             area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-            # print(area)
             pressed_features = self.get_features_in_geometry(area)
 
         layer = self.iface.activeLayer()
