@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 from typing import *
 
 from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
@@ -14,7 +15,8 @@ from .attribute_editor_dialog import *
 
 # TODO: исправить формат даты в самом редакторе и в диалоге с выбором объектов
 # TODO: ограничить ширину диалога с выбором объектов
-# TODO:
+
+# TODO: реализовать выделение прямоугольником
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
@@ -82,19 +84,23 @@ class PointTool(QgsMapTool):
             point = QgsGeometry.fromPointXY(event.mapPoint())
             pressed_features = self.get_features_in_geometry(point)
         else:
-            radius = 17
-            origin = event.pixelPoint()
+            # radius = 17
+            # origin = event.pixelPoint()
+            #
+            # # алиас для длинной функции
+            # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
+            # a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
+            # a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
+            # a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
+            # a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
+            #
+            # area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
+            # # print(area)
+            # pressed_features = self.get_features_in_geometry(area)
 
-            # алиас для длинной функции
-            toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
-            a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
-            a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
-            a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
-            a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
-
-            area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-            # print(area)
-            pressed_features = self.get_features_in_geometry(area)
+            point = QgsGeometry.fromPointXY(event.mapPoint())
+            buffer = point.buffer(distance=10, segments=10)
+            pressed_features = self.get_features_in_geometry(buffer)
 
         layer = self.iface.activeLayer()
 
@@ -157,30 +163,48 @@ class PointTool(QgsMapTool):
 
         return closure
 
-    def get_features_in_geometry(self, geometry) -> List:
+    def get_features_in_geometry(self, geometry) -> list:
         """Returns features in geometry"""
 
-        # get active layer
+        # активный слой
         layer = self.iface.activeLayer()
 
         source_crs = layer.sourceCrs()
         dest_crs = QgsProject.instance().crs()
 
+        # правило преобразования
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
 
-        # list of found features
+        # найденные объекты
         result = []
+        pprint.pprint(geometry)
+        return
 
         # iterate over features in the layer to find features that intersect the point
-        layer_features = layer.getFeatures()
-        for feature in layer_features:
-            feature_geometry = feature.geometry()
-            feature_geometry.transform(transform)
-            if geometry.intersects(feature_geometry):
-                # print(feature_geometry)
-                result.append(feature)
+        # if geometry.wkbType() == QgsWkbTypes().Polygon:
+        # print('polygon')
+        # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
+        # else:
+        #     print('point')
+            # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
+            # for feature in layer.getFeatures():
 
-        return result
+            # print('boundingBox:', geometry.boundingBox())
+
+        # layer_features = layer.getFeatures(f)
+        # pprint.pprint(list(map(lambda x: x['full_name'], list(layer_features))))
+
+        # for feature in layer_features:
+        #     feature_geometry = feature.geometry()
+        #     # feature_geometry.transform(transform)
+        #     if geometry.intersects(feature_geometry):
+        #         # print(feature_geometry)
+        #         result.append(feature)
+
+        # for i in layer_features:
+        #     result.append(i)
+        # print('result len', len(result))
+        # return result
 
     def clear_layout(self, layout) -> None:
         """Gets layout and clears it"""
@@ -224,11 +248,14 @@ class PointTool(QgsMapTool):
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
+        # если слой отсутствует в системе требований
         if self.classifier.get_layer_ref(layer_name) is None:
 
             self.parent.table.setRowCount(len(data))
 
-            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не подсвечиваются, подсказок нет")
+            # сообщение
+            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не "
+                                                               "подсвечиваются, подсказок нет")
             self.iface.messageBar().pushWidget(widget, Qgis.Info)
 
             self.combo_box_list = []
