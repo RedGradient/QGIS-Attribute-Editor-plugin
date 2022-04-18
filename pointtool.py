@@ -99,7 +99,7 @@ class PointTool(QgsMapTool):
             # pressed_features = self.get_features_in_geometry(area)
 
             point = QgsGeometry.fromQPointF(event.pixelPoint())
-            buffer = point.buffer(distance=15, segments=5)
+            buffer = point.buffer(distance=0.001, segments=10)
             pressed_features = self.get_features_in_geometry(buffer)
 
         layer = self.iface.activeLayer()
@@ -169,11 +169,11 @@ class PointTool(QgsMapTool):
         # активный слой
         layer = self.iface.activeLayer()
 
-        source_crs = layer.sourceCrs()
-        dest_crs = QgsProject.instance().crs()
+        # source_crs = layer.sourceCrs()
+        # dest_crs = QgsProject.instance().crs()
         # правило преобразования
-        tr = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
-        geometry.transform(tr)
+        # tr = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
+        # geometry.transform(tr)
 
         # найденные объекты
         result = []
@@ -183,7 +183,7 @@ class PointTool(QgsMapTool):
 
         for i in features:
             result.append(i)
-        assert len(result) > 0
+
         return result
 
         # iterate over features in the layer to find features that intersect the point
