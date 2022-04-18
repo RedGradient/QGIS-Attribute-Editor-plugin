@@ -172,6 +172,7 @@ class PointTool(QgsMapTool):
         # source_crs = layer.sourceCrs()
         # dest_crs = QgsProject.instance().crs()
         # правило преобразования
+        # как в source_crs указать систему координат холста?
         # tr = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         # geometry.transform(tr)
 
