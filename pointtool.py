@@ -12,6 +12,10 @@ from .attribute_editor_dialog import *
 # TODO: повторное сохранение не закрывая диалог
 # TODO: упростить display_attrs метод
 
+# TODO: исправить формат даты в самом редакторе и в диалоге с выбором объектов
+# TODO: ограничить ширину диалога с выбором объектов
+# TODO:
+
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
         """Конструктор.
@@ -224,7 +228,7 @@ class PointTool(QgsMapTool):
 
             self.parent.table.setRowCount(len(data))
 
-            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не подсвечиваются")
+            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не подсвечиваются, подсказок нет")
             self.iface.messageBar().pushWidget(widget, Qgis.Info)
 
             self.combo_box_list = []
