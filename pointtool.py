@@ -66,8 +66,9 @@ class PointTool(QgsMapTool):
         self.display_attrs(layer.selectedFeatures())
 
     def canvasReleaseEvent(self, event):
-        if self.iface.activeLayer().wkbType() == QgsWkbTypes.Polygon:
-            radius = 5
+        layer = self.iface.activeLayer()
+        if layer.wkbType() == QgsWkbTypes.Polygon:
+            radius = 20
         else:
             radius = 8.5
 
@@ -103,7 +104,6 @@ class PointTool(QgsMapTool):
         #
         # pressed_features = self.get_features_in_geometry(area)
 
-        layer = self.iface.activeLayer()
 
         # these should be removed anyway
         self.parent.table.setRowCount(0)
