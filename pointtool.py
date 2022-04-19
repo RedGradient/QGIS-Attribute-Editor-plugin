@@ -4,6 +4,7 @@ from typing import *
 
 from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
 from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QPoint
 from qgis.core import *
 from qgis.gui import QgsMapTool
@@ -64,6 +65,8 @@ class PointTool(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         layer = self.iface.activeLayer()
+
+        # выбираем радиус окружности буфера
         if layer.wkbType() == QgsWkbTypes.Polygon:
             radius = 5
         else:
@@ -81,7 +84,7 @@ class PointTool(QgsMapTool):
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])
-        print(area)
+
         pressed_features = self.get_features_in_geometry(area)
 
         # these should be removed anyway
@@ -93,7 +96,8 @@ class PointTool(QgsMapTool):
         if len(pressed_features) == 0:
             self.parent.table.setRowCount(0)
             self.input_widget_list = []
-            self.parent.selected_object_count.setText("Выбрано объектов: 0")
+            if hasattr(self.parent, "selected_object_count"):
+                self.parent.selected_object_count.setText("Выбрано объектов: 0")
             return
         if self.mode == "switch":
             layer.removeSelection()
@@ -106,8 +110,10 @@ class PointTool(QgsMapTool):
             for feature in pressed_features:
                 item = QtWidgets.QListWidgetItem()
                 item.setText(str(feature.attributes()[0]))
+                item.setData(QtCore.Qt.UserRole, feature)
                 self.feat_select_dlg.list.addItem(item)
-                self.feat_select_dlg.list.itemClicked.connect(self.on_select_feat_btn_clicked(feature))
+
+            self.feat_select_dlg.list.itemDoubleClicked.connect(self.on_select_feat_btn_clicked())
 
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
@@ -126,13 +132,13 @@ class PointTool(QgsMapTool):
         if not self.parent.isVisible():
             self.parent.show()
 
-    def on_select_feat_btn_clicked(self, feature) -> Callable:
+    def on_select_feat_btn_clicked(self) -> Callable:
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
-        def closure():
+        def closure(item):
+            feature = item.data(QtCore.Qt.UserRole)  # извлечь feature из item
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
-            # self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
                 if self.mode == "switch":
