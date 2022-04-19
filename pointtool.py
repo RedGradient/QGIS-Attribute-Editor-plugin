@@ -104,10 +104,10 @@ class PointTool(QgsMapTool):
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
             for feature in pressed_features:
-                btn = QPushButton()
-                btn.setText(str(feature.attributes()[0]))
-                btn.clicked.connect(self.on_select_feat_btn_clicked(feature))
-                self.feat_select_dlg.featBox.insertWidget(-1, btn)
+                item = QtWidgets.QListWidgetItem()
+                item.setText(str(feature.attributes()[0]))
+                self.feat_select_dlg.list.addItem(item)
+                self.feat_select_dlg.list.itemClicked.connect(self.on_select_feat_btn_clicked(feature))
 
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
