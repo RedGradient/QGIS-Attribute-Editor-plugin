@@ -66,48 +66,42 @@ class PointTool(QgsMapTool):
         self.display_attrs(layer.selectedFeatures())
 
     def canvasReleaseEvent(self, event):
-        # print("pixel:", event.pixelPoint().x(), event.pixelPoint().y())
-        # TODO QgsMapCanvas.mapToolSet | args: newTool, oldTool
-        # radius = 17
-        # origin = event.pixelPoint()
-        # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
-        # a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
-        # a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
-        # a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
-        # a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
-
-        # area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-        # print('origin:', origin)
-        # print(area)
-
         if self.iface.activeLayer().wkbType() == QgsWkbTypes.Polygon:
-            # point = QgsGeometry.fromPointXY(event.mapPoint())
-            # pressed_features = self.get_features_in_geometry(point)
             radius = 5
         else:
-            radius = 17
+            radius = 8.5
 
-            # point = QgsGeometry.fromQPointF(event.pixelPoint())
-            # point = QgsGeometry.fromPointXY(event.mapPoint())
-            # buffer = point.buffer(distance=0.001, segments=10)
-            # pressed_features = self.get_features_in_geometry(buffer)
+        point = QgsGeometry.fromQPointF(event.pixelPoint())
+        buffer = point.buffer(distance=radius, segments=20)
 
-        origin = event.pixelPoint()
+        QPoint_vertices = []
 
         # алиас для длинной функции
         toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
 
-        a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
-        a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
-        a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
-        a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
+        # переводим из пиксельных координат в координаты карты
+        for vert in buffer.vertices():
+            QPoint_vertices.append(toMapCoordinates(vert.x(), vert.y()))
 
-        # создаем полигон
-        area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-
-        # print(area)
-
+        area = QgsGeometry.fromPolygonXY([QPoint_vertices])
         pressed_features = self.get_features_in_geometry(area)
+
+        # origin = event.pixelPoint()
+        #
+        # # алиас для длинной функции
+        # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
+        #
+        # a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
+        # a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
+        # a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
+        # a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
+        #
+        # # создаем полигон
+        # area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
+        #
+        # # print(area)
+        #
+        # pressed_features = self.get_features_in_geometry(area)
 
         layer = self.iface.activeLayer()
 
