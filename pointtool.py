@@ -4,6 +4,7 @@ from typing import *
 
 from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
 from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt.QtCore import QPoint
 from qgis.core import *
 from qgis.gui import QgsMapTool
 
@@ -68,42 +69,24 @@ class PointTool(QgsMapTool):
     def canvasReleaseEvent(self, event):
         layer = self.iface.activeLayer()
         if layer.wkbType() == QgsWkbTypes.Polygon:
-            radius = 20
+            radius = 5
         else:
             radius = 8.5
 
         point = QgsGeometry.fromQPointF(event.pixelPoint())
-        buffer = point.buffer(distance=radius, segments=20)
+        buffer = point.buffer(distance=radius, segments=10)
 
-        QPoint_vertices = []
-
-        # алиас для длинной функции
-        toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
+        vertices = []
 
         # переводим из пиксельных координат в координаты карты
+        canvas = self.iface.mapCanvas()
         for vert in buffer.vertices():
-            QPoint_vertices.append(toMapCoordinates(vert.x(), vert.y()))
+            point = QgsMapTool(canvas).toLayerCoordinates(layer, QPoint(vert.x(), vert.y()))
+            vertices.append(point)
 
-        area = QgsGeometry.fromPolygonXY([QPoint_vertices])
+        area = QgsGeometry.fromPolygonXY([vertices])
+        print(area)
         pressed_features = self.get_features_in_geometry(area)
-
-        # origin = event.pixelPoint()
-        #
-        # # алиас для длинной функции
-        # toMapCoordinates = self.iface.mapCanvas().getCoordinateTransform().toMapCoordinates
-        #
-        # a1 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() - radius / 2))
-        # a2 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() - radius / 2))
-        # a3 = toMapCoordinates(int(origin.x() + radius / 2), int(origin.y() + radius / 2))
-        # a4 = toMapCoordinates(int(origin.x() - radius / 2), int(origin.y() + radius / 2))
-        #
-        # # создаем полигон
-        # area = QgsGeometry.fromPolygonXY([[a1, a2, a3, a4]])
-        #
-        # # print(area)
-        #
-        # pressed_features = self.get_features_in_geometry(area)
-
 
         # these should be removed anyway
         self.parent.table.setRowCount(0)
