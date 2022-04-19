@@ -10,14 +10,10 @@ from qgis.gui import QgsMapTool
 
 from .attribute_editor_dialog import *
 
-# TODO: упростить создание полигона вокруг точки нажатия
-# TODO: повторное сохранение не закрывая диалог
-# TODO: упростить display_attrs метод
-
 # TODO: исправить формат даты в самом редакторе и в диалоге с выбором объектов
 # TODO: ограничить ширину диалога с выбором объектов
+# TODO: реализовать выделение перетягиванием
 
-# TODO: реализовать выделение прямоугольником
 
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
