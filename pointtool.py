@@ -91,7 +91,10 @@ class PointTool(QgsMapTool):
         # переводим из пиксельных координат в координаты карты
         canvas = self.iface.mapCanvas()
         for vert in buffer.vertices():
-            point = QgsMapTool(canvas).toLayerCoordinates(layer, QPoint(vert.x(), vert.y()))
+            point = QgsMapTool(canvas).toLayerCoordinates(
+                layer,
+                QPoint(int(vert.x()), int(vert.y()))
+            )
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])

@@ -15,6 +15,14 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
         self.setGeometry(0, 0, 500, 600)
         self.vbox = QtWidgets.QVBoxLayout()
 
+        self.up_hbox = QtWidgets.QHBoxLayout()
+
+        self.create_index_btn = QtWidgets.QPushButton('Создать индекс')
+        self.update_index_btn = QtWidgets.QPushButton('Обновить индекс')
+        
+        self.up_hbox.insertWidget(-1, self.create_index_btn)
+        self.up_hbox.insertWidget(-1, self.update_index_btn)
+
         self.table = CustomTableWidget()
 
         self.save_btn = QtWidgets.QPushButton(" Сохранить")
@@ -22,6 +30,9 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
 
         self.save_btn.setStyleSheet('padding: 5px')
         self.save_btn.setEnabled(False)
+
+        self.vbox.insertLayout(0, self.up_hbox)
+
         self.vbox.insertWidget(-1, self.table)
         self.vbox.insertWidget(-1, self.save_btn)
 
@@ -41,15 +52,13 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
             QtWidgets.QSizePolicy.Policy.Expanding,
             QtWidgets.QSizePolicy.Policy.Minimum
         )
-        self.up_hbox = QtWidgets.QHBoxLayout()
-        self.up_hbox.insertWidget(-1, self.selected_object_count)
+
+        self.up_hbox.insertWidget(0, self.selected_object_count)
 
         self.up_hbox.addItem(self.hspacer)
 
         # кнопка обновить
         self.up_hbox.insertWidget(-1, self.update_btn)
-
-        self.vbox.insertLayout(0, self.up_hbox)
 
 
 class AttributeEditorSwitchDialog(AttributeEditorBaseDialog):
