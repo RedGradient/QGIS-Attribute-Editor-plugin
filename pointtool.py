@@ -27,8 +27,6 @@ from .attribute_editor_dialog import *
 # TODO: появление редактора после создания объекта
 
 
-
-
 class PointTool(QgsMapTool):
     def __init__(self, parent, iface, canvas, classifier, mode: str):
         """Конструктор.
@@ -148,7 +146,7 @@ class PointTool(QgsMapTool):
 
                 self.feat_select_dlg.list.addItem(item)
 
-            self.feat_select_dlg.list.itemDoubleClicked.connect(self.on_select_feat_btn_clicked())
+            self.feat_select_dlg.list.itemClicked.connect(self.on_select_feat_btn_clicked())
 
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
