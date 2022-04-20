@@ -78,7 +78,14 @@ class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
     def __init__(self, parent=None) -> None:
         """Constructor."""
         super(FeatureSelectDialog, self).__init__(parent)
-        self.setupUi(self)
+
+        self.vbox = QtWidgets.QVBoxLayout()
+
+        self.list = QtWidgets.QListWidget()
+
+        self.vbox.insertWidget(-1, self.list)
+        self.setLayout(self.vbox)
+        # self.setupUi(self)
 
 
 class CustomLineEdit(QtWidgets.QLineEdit):

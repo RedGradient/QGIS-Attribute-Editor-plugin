@@ -4,6 +4,7 @@ from typing import *
 
 from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
 from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QPoint
 from qgis.core import *
 from qgis.gui import QgsMapTool
@@ -75,6 +76,8 @@ class PointTool(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         layer = self.iface.activeLayer()
+
+        # выбираем радиус окружности буфера
         if layer.wkbType() == QgsWkbTypes.Polygon:
             radius = 5
         else:
@@ -92,7 +95,7 @@ class PointTool(QgsMapTool):
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])
-        print(area)
+
         pressed_features = self.get_features_in_geometry(area)
 
         # these should be removed anyway
@@ -104,7 +107,8 @@ class PointTool(QgsMapTool):
         if len(pressed_features) == 0:
             self.parent.table.setRowCount(0)
             self.input_widget_list = []
-            self.parent.selected_object_count.setText("Выбрано объектов: 0")
+            if hasattr(self.parent, "selected_object_count"):
+                self.parent.selected_object_count.setText("Выбрано объектов: 0")
             return
         if self.mode == "switch":
             layer.removeSelection()
@@ -114,11 +118,35 @@ class PointTool(QgsMapTool):
             self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
+
+            # храним состояние зебры
+            color_code = {True: '#ffffff', False: '#f4f4f4'}
+            color_code_status = True
+
             for feature in pressed_features:
-                btn = QPushButton()
-                btn.setText(str(feature.attributes()[0]))
-                btn.clicked.connect(self.on_select_feat_btn_clicked(feature))
-                self.feat_select_dlg.featBox.insertWidget(-1, btn)
+                # элемент списка
+                item = QtWidgets.QListWidgetItem()
+
+                # задаем текст и данные
+                item.setText(str(feature.attributes()[0]))
+                item.setData(QtCore.Qt.UserRole, feature)
+
+                # выравнивание
+                item.setTextAlignment(QtCore.Qt.AlignHCenter)
+
+                # зебра
+                color = QColor(color_code[color_code_status])
+                color_code_status = not color_code_status
+                item.setBackground(color)
+
+                # задаем размер шрифта
+                font = item.font()
+                font.setPointSize(14)
+                item.setFont(font)
+
+                self.feat_select_dlg.list.addItem(item)
+
+            self.feat_select_dlg.list.itemDoubleClicked.connect(self.on_select_feat_btn_clicked())
 
             self.feat_select_dlg.show()
             result = self.feat_select_dlg.exec_()
@@ -137,13 +165,13 @@ class PointTool(QgsMapTool):
         if not self.parent.isVisible():
             self.parent.show()
 
-    def on_select_feat_btn_clicked(self, feature) -> Callable:
+    def on_select_feat_btn_clicked(self) -> Callable:
         """It is callback for feature button in feature choice dialog. It gets feature and show it"""
 
-        def closure():
+        def closure(item):
+            feature = item.data(QtCore.Qt.UserRole)  # извлечь feature из item
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
-            # self.selected_features.append(feature)
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
                 if self.mode == "switch":
