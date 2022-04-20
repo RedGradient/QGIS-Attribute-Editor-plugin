@@ -107,8 +107,11 @@ class PointTool(QgsMapTool):
             self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
+
+            # храним состояние зебры
             color_code = {True: '#ffffff', False: '#f4f4f4'}
             color_code_status = True
+
             for feature in pressed_features:
                 # элемент списка
                 item = QtWidgets.QListWidgetItem()
@@ -120,17 +123,18 @@ class PointTool(QgsMapTool):
                 # выравнивание
                 item.setTextAlignment(QtCore.Qt.AlignHCenter)
 
+                # зебра
                 color = QColor(color_code[color_code_status])
                 color_code_status = not color_code_status
                 item.setBackground(color)
 
+                # задаем размер шрифта
                 font = item.font()
                 font.setPointSize(14)
                 item.setFont(font)
 
                 self.feat_select_dlg.list.addItem(item)
 
-            # self.feat_select_dlg.list.setSpacing(10)
             self.feat_select_dlg.list.itemDoubleClicked.connect(self.on_select_feat_btn_clicked())
 
             self.feat_select_dlg.show()
