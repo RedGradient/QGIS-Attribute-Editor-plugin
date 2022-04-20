@@ -128,7 +128,10 @@ class PointTool(QgsMapTool):
                 item = QtWidgets.QListWidgetItem()
 
                 # задаем текст и данные
-                item.setText(str(feature.attributes()[0]))
+                if len(feature.attributes()) > 0:
+                    item.setText(str(feature.attributes()[0]))
+                else:
+                    item.setText(str(feature.id()))
                 item.setData(QtCore.Qt.UserRole, feature)
 
                 # выравнивание
