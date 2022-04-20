@@ -49,7 +49,7 @@ class PointTool(QgsMapTool):
 
         self.no_field_list = []
 
-        # используется для режима переключения
+        # (только для 'switch' режима)
         # храним список объектов, по которым будем переключаться
         self.mult_press_data = {"pressed_list": [], "current_index": 0}
 
