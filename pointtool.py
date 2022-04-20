@@ -24,6 +24,8 @@ from .attribute_editor_dialog import *
 
 # TODO: статус бар
 
+# TODO: появление редактора после создания объекта
+
 
 
 
