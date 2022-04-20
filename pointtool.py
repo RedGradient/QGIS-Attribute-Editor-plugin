@@ -202,14 +202,16 @@ class PointTool(QgsMapTool):
             print('\nСоздание индекса...')
             self.index = QgsSpatialIndex(layer.getFeatures())
             print('Индекс создан!\n')
-        else:
-            candidates = self.index.intersects(geometry.boundingBox())
-            req = QgsFeatureRequest().setFilterFids(candidates)
-            print(layer.getFeatures(req))
+
+        candidates = self.index.intersects(geometry.boundingBox())
+        print(candidates)
+        req = QgsFeatureRequest().setFilterFids(candidates)
+        features = layer.getFeatures(req)
+        # print(layer.getFeatures(req))
         # ---
 
-        f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-        features = layer.getFeatures(f)
+        # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
+        # features = layer.getFeatures(f)
 
         for i in features:
             result.append(i)
