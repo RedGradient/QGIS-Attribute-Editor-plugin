@@ -197,6 +197,17 @@ class PointTool(QgsMapTool):
         # найденные объекты
         result = []
 
+        # --- индекс ---
+        if not hasattr(self, 'index'):
+            print('\nСоздание индекса...')
+            self.index = QgsSpatialIndex(layer.getFeatures())
+            print('Индекс создан!\n')
+        else:
+            candidates = self.index.intersects(geometry.boundingBox())
+            req = QgsFeatureRequest().setFilterFids(candidates)
+            print(layer.getFeatures(req))
+        # ---
+
         f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
         features = layer.getFeatures(f)
 
