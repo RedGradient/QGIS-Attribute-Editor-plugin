@@ -71,18 +71,28 @@ class PointTool(QgsMapTool):
             # создание и обновление индекса
             self.parent.create_update_index_btn.clicked.connect(self.on_create_update_index_btn)
 
+            # --- test button
+            self.parent.test_btn.clicked.connect(self.on_test_btn_click)
+
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
 
-    @staticmethod
-    def create_index(layer, indexes, *args):
+    def on_test_btn_click(self):
+        print(self.indexes)
+
+    def create_index(self, *args):
+        layer = self.iface.activeLayer()
         index = QgsSpatialIndex(layer.getFeatures())
-        indexes[layer.id()] = index
+        # self.indexes[layer.id()] = index
         return index
 
-    def complete(self, *args):
-        pass
+    def complete(self, exception, result, *args):
+        if exception is None:
+            layer = self.iface.activeLayer()
+            self.indexes[layer.id()] = result
+        else:
+            print('В потоке произошла ошибка')
 
     def on_create_update_index_btn(self):
         """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
@@ -91,9 +101,7 @@ class PointTool(QgsMapTool):
         print(f'Создание индекса для слоя {layer.name()}...')
         task = QgsTask.fromFunction(f'Создание индекса для слоя {layer.name()}',
                                     self.create_index,
-                                    on_finished=self.complete,
-                                    layer=layer,
-                                    indexes=self.indexes)
+                                    on_finished=self.complete)
         QgsApplication.taskManager().addTask(task)
 
     def on_update_index_btn(self):
