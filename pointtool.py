@@ -49,6 +49,8 @@ class PointTool(QgsMapTool):
 
         self.no_field_list = []
 
+        self.indexes = {}
+
         # (только для 'switch' режима)
         # храним список объектов, по которым будем переключаться
         self.mult_press_data = {"pressed_list": [], "current_index": 0}
@@ -66,9 +68,28 @@ class PointTool(QgsMapTool):
             else:
                 raise Exception(f'Неизвестный режим инструмента: {self.mode}')
 
+            # создание и обновление индекса
+            self.parent.create_index_btn.clicked.connect(self.on_create_index_btn)
+            # self.parent.update_index_btn.clicked.connect()
+
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
+
+    def on_create_index_btn(self):
+        layer = self.iface.activeLayer()
+
+        # if self.indexes.get(layer.id()) is not None:
+        #     self.parent.create_index_btn.setEnabled(False)
+        #     return
+
+        print(f'Создание индекса для слоя {layer.name()}...')
+        index = QgsSpatialIndex(layer.getFeatures())
+        self.indexes[layer.id()] = index
+        print('Индекс создан!')
+
+    def on_update_index_btn(self):
+        pass
 
     def on_update_btn_clicked(self):
         layer = self.iface.activeLayer()
@@ -88,9 +109,9 @@ class PointTool(QgsMapTool):
 
         vertices = []
 
-        # переводим из пиксельных координат в координаты карты
         canvas = self.iface.mapCanvas()
         for vert in buffer.vertices():
+            # переводим из пиксельных координат в координаты слоя
             point = QgsMapTool(canvas).toLayerCoordinates(
                 layer,
                 QPoint(int(vert.x()), int(vert.y()))
@@ -98,6 +119,7 @@ class PointTool(QgsMapTool):
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])
+        print('buffer:', buffer)
 
         pressed_features = self.get_features_in_geometry(area)
 
@@ -197,55 +219,25 @@ class PointTool(QgsMapTool):
 
         # активный слой
         layer = self.iface.activeLayer()
-        # найденные объекты
-        result = []
 
-        # --- индекс ---
-        if not hasattr(self, 'index'):
-            print('\nСоздание индекса...')
-            self.index = QgsSpatialIndex(layer.getFeatures())
-            print('Индекс создан!\n')
+        # если есть индекс, используем его
+        if self.indexes.get(layer.id()) is not None:
+            index = self.indexes[layer.id()]
+            candidates = index.intersects(geometry.boundingBox())
+            req = QgsFeatureRequest().setFilterFids(candidates)
+            print('candidates:', candidates)
+        else:
+            req = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
 
-        candidates = self.index.intersects(geometry.boundingBox())
-        print(candidates)
-        req = QgsFeatureRequest().setFilterFids(candidates)
+        print('box:', geometry.boundingBox())
+
         features = layer.getFeatures(req)
-        # print(layer.getFeatures(req))
-        # ---
-
-        # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-        # features = layer.getFeatures(f)
-
-        for i in features:
-            result.append(i)
+        result = []
+        for f in features:
+            if f.geometry().intersects(geometry):
+                result.append(f)
 
         return result
-
-        # iterate over features in the layer to find features that intersect the point
-        # if geometry.wkbType() == QgsWkbTypes().Polygon:
-        # print('polygon')
-        # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-        # else:
-        #     print('point')
-            # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-            # for feature in layer.getFeatures():
-
-            # print('boundingBox:', geometry.boundingBox())
-
-        # layer_features = layer.getFeatures(f)
-        # pprint.pprint(list(map(lambda x: x['full_name'], list(layer_features))))
-
-        # for feature in layer_features:
-        #     feature_geometry = feature.geometry()
-        #     # feature_geometry.transform(transform)
-        #     if geometry.intersects(feature_geometry):
-        #         # print(feature_geometry)
-        #         result.append(feature)
-
-        # for i in layer_features:
-        #     result.append(i)
-        # print('result len', len(result))
-        # return result
 
     def clear_layout(self, layout) -> None:
         """Gets layout and clears it"""

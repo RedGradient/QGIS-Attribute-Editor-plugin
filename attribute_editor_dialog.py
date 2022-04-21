@@ -19,7 +19,7 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
 
         self.create_index_btn = QtWidgets.QPushButton('Создать индекс')
         self.update_index_btn = QtWidgets.QPushButton('Обновить индекс')
-        
+
         self.up_hbox.insertWidget(-1, self.create_index_btn)
         self.up_hbox.insertWidget(-1, self.update_index_btn)
 
