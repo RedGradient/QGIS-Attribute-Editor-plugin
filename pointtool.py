@@ -69,18 +69,18 @@ class PointTool(QgsMapTool):
                 raise Exception(f'Неизвестный режим инструмента: {self.mode}')
 
             # создание и обновление индекса
-            self.parent.create_index_btn.clicked.connect(self.on_create_index_btn)
-            # self.parent.update_index_btn.clicked.connect()
+            self.parent.create_update_index_btn.clicked.connect(self.on_create_update_index_btn)
 
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
 
-    def on_create_index_btn(self):
+    def on_create_update_index_btn(self):
+        """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
         layer = self.iface.activeLayer()
 
         # if self.indexes.get(layer.id()) is not None:
-        #     self.parent.create_index_btn.setEnabled(False)
+        #     self.parent.create_update_index_btn.setEnabled(False)
         #     return
 
         print(f'Создание индекса для слоя {layer.name()}...')
@@ -96,6 +96,7 @@ class PointTool(QgsMapTool):
         self.display_attrs(layer.selectedFeatures())
 
     def canvasReleaseEvent(self, event):
+        """Обрабатывает нажатие на карту"""
         layer = self.iface.activeLayer()
 
         # выбираем радиус окружности буфера
@@ -210,32 +211,22 @@ class PointTool(QgsMapTool):
     def get_features_in_geometry(self, geometry) -> list:
         """Returns features in geometry"""
 
-        # source_crs = layer.sourceCrs()
-        # dest_crs = QgsProject.instance().crs()
-        # правило преобразования
-        # как в source_crs указать систему координат холста?
-        # tr = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
-        # geometry.transform(tr)
-
         # активный слой
         layer = self.iface.activeLayer()
 
-        # если есть индекс, используем его
-        if self.indexes.get(layer.id()) is not None:
+        # если для этого слоя есть индекс и разрешено использование индекса
+        if (self.indexes.get(layer.id()) is not None and
+                self.parent.use_index_chb.isChecked()):
             index = self.indexes[layer.id()]
             candidates = index.intersects(geometry.boundingBox())
             req = QgsFeatureRequest().setFilterFids(candidates)
-            print('candidates:', candidates)
         else:
             req = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
 
-        print('box:', geometry.boundingBox())
-
-        features = layer.getFeatures(req)
         result = []
-        for f in features:
-            if f.geometry().intersects(geometry):
-                result.append(f)
+        for feature in layer.getFeatures(req):
+            if feature.geometry().intersects(geometry):
+                result.append(feature)
 
         return result
 

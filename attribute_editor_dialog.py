@@ -17,11 +17,12 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
 
         self.up_hbox = QtWidgets.QHBoxLayout()
 
-        self.create_index_btn = QtWidgets.QPushButton('Создать индекс')
-        self.update_index_btn = QtWidgets.QPushButton('Обновить индекс')
+        self.create_update_index_btn = QtWidgets.QPushButton('Создать индекс')
+        self.use_index_chb = QtWidgets.QCheckBox('Использовать индекс')
+        self.use_index_chb.setChecked(True)
 
-        self.up_hbox.insertWidget(-1, self.create_index_btn)
-        self.up_hbox.insertWidget(-1, self.update_index_btn)
+        self.up_hbox.insertWidget(-1, self.create_update_index_btn)
+        self.up_hbox.insertWidget(-1, self.use_index_chb)
 
         self.table = CustomTableWidget()
 
@@ -53,7 +54,7 @@ class AttributeEditorDialog(AttributeEditorBaseDialog):
             QtWidgets.QSizePolicy.Policy.Minimum
         )
 
-        self.up_hbox.insertWidget(0, self.selected_object_count)
+        self.vbox.insertWidget(-1, self.selected_object_count)
 
         self.up_hbox.addItem(self.hspacer)
 
