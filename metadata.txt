@@ -6,11 +6,11 @@
 name=Редактор атрибутов
 qgisMinimumVersion=3.0
 description=Просмотр и редактирование атрибутов объекта
-version=1.4
+version=1.5
 author=МКУ ЦИОГД
 # email=example@mail.core
 
-about=Просмотр и редактирование атрибутов объекта
+# about=Просмотр и редактирование атрибутов объекта
 
 # tracker=http://bugs
 # repository=http://repo

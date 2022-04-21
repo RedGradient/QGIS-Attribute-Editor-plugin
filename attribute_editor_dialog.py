@@ -40,7 +40,7 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
         # --- тестовая кнопка
         self.test_btn = QtWidgets.QPushButton('Test')
         self.vbox.insertWidget(-1, self.test_btn)
-        self.test_btn.setVisible(True)
+        self.test_btn.setVisible(False)
 
         self.setLayout(self.vbox)
 

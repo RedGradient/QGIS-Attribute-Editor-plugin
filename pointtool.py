@@ -82,7 +82,7 @@ class PointTool(QgsMapTool):
         print(self.indexes)
 
     def on_create_update_index_btn(self):
-        """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
+        """Обрабатывает нажатие на кнопку 'Создать/Пересоздать индекс'"""
         layer = self.iface.activeLayer()
 
         def create_index(*args):
@@ -103,10 +103,12 @@ class PointTool(QgsMapTool):
                                     )
 
         # не работает
-        QgsApplication.taskManager().addTask(task)
+        # QgsApplication.taskManager().addTask(task)
 
         # работает
-        # task.run()
+        task.run()
+
+        self.parent.create_update_index_btn.setText('Пересоздать индекс')
 
     def on_update_index_btn(self):
         pass
@@ -177,7 +179,7 @@ class PointTool(QgsMapTool):
                 item.setData(QtCore.Qt.UserRole, feature)
 
                 # выравнивание
-                item.setTextAlignment(QtCore.Qt.AlignHCenter)
+                # item.setTextAlignment(QtCore.Qt.AlignHCenter)
 
                 # зебра
                 color = QColor(color_code[color_code_status])
@@ -266,7 +268,9 @@ class PointTool(QgsMapTool):
 
         # меняем название кнопки, если есть индекс
         if self.indexes.get(self.iface.activeLayer().id()) is not None:
-            self.parent.create_update_index_btn.setText('Обновить индекс')
+            self.parent.create_update_index_btn.setText('Пересоздать индекс')
+        else:
+            self.parent.create_update_index_btn.setText('Создать индекс')
 
         layer_name = self.iface.activeLayer().name()
         self.parent.setWindowTitle(f"{layer_name} — Слой")
