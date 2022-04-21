@@ -79,13 +79,19 @@ class PointTool(QgsMapTool):
         """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
         layer = self.iface.activeLayer()
 
-        # if self.indexes.get(layer.id()) is not None:
-        #     self.parent.create_update_index_btn.setEnabled(False)
-        #     return
+        def create_index(task):
+            _layer = self.iface.activeLayer()
+            index = QgsSpatialIndex(_layer.getFeatures())
+            self.indexes[layer.id()] = index
+            return index
+
+        def completed(*args):
+            print(args)
 
         print(f'Создание индекса для слоя {layer.name()}...')
-        index = QgsSpatialIndex(layer.getFeatures())
-        self.indexes[layer.id()] = index
+        task1 = QgsTask.fromFunction('create index', create_index, on_finished=completed)
+
+        QgsApplication.taskManager().addTask(task1)
         print('Индекс создан!')
 
     def on_update_index_btn(self):
@@ -120,7 +126,6 @@ class PointTool(QgsMapTool):
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])
-        print('buffer:', buffer)
 
         pressed_features = self.get_features_in_geometry(area)
 
