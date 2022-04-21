@@ -75,24 +75,26 @@ class PointTool(QgsMapTool):
 
         QgsMapTool.__init__(self, canvas)
 
+    @staticmethod
+    def create_index(layer, indexes, *args):
+        index = QgsSpatialIndex(layer.getFeatures())
+        indexes[layer.id()] = index
+        return index
+
+    def complete(self, *args):
+        pass
+
     def on_create_update_index_btn(self):
         """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
         layer = self.iface.activeLayer()
 
-        def create_index(task):
-            _layer = self.iface.activeLayer()
-            index = QgsSpatialIndex(_layer.getFeatures())
-            self.indexes[layer.id()] = index
-            return index
-
-        def completed(*args):
-            print(args)
-
         print(f'Создание индекса для слоя {layer.name()}...')
-        task1 = QgsTask.fromFunction('create index', create_index, on_finished=completed)
-
-        QgsApplication.taskManager().addTask(task1)
-        print('Индекс создан!')
+        task = QgsTask.fromFunction(f'Создание индекса для слоя {layer.name()}',
+                                    self.create_index,
+                                    on_finished=self.complete,
+                                    layer=layer,
+                                    indexes=self.indexes)
+        QgsApplication.taskManager().addTask(task)
 
     def on_update_index_btn(self):
         pass
@@ -249,6 +251,11 @@ class PointTool(QgsMapTool):
 
     def display_attrs(self, features: List) -> None:
         """Takes feature list and display their attributes"""
+
+        # меняем название кнопки, если есть индекс
+        if self.indexes.get(self.iface.activeLayer().id()) is not None:
+            self.parent.create_update_index_btn.setText('Обновить индекс')
+
         layer_name = self.iface.activeLayer().name()
         self.parent.setWindowTitle(f"{layer_name} — Слой")
 
