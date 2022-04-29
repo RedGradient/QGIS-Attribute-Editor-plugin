@@ -12,6 +12,9 @@ from .req_provider import RequirementsProvider
 from .attribute_editor_dialog import *
 
 
+DELETEME = "deleteme"
+
+
 class AttributeEditor:
     """QGIS Plugin Implementation."""
 
