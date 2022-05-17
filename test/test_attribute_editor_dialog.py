@@ -14,7 +14,7 @@ __copyright__ = 'Copyright 2022, Karo'
 
 import unittest
 
-from qgis.PyQt.QtGui import QDialogButtonBox, QDialog
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QDialog
 
 from attribute_editor_dialog import AttributeEditorDialog
 
@@ -27,11 +27,17 @@ class AttributeEditorDialogTest(unittest.TestCase):
 
     def setUp(self):
         """Runs before each test."""
-        self.dialog = AttributeEditorDialog(None)
+
+        # if None in QGIS_APP:
+        #     return
+
+        self.iface = QGIS_APP[2]
+        self.dialog = AttributeEditorDialog(parent=self.iface.mainWindow())
 
     def tearDown(self):
         """Runs after each test."""
         self.dialog = None
+        self.iface = None
 
     def test_dialog_ok(self):
         """Test we can click OK."""
@@ -47,6 +53,7 @@ class AttributeEditorDialogTest(unittest.TestCase):
         button.click()
         result = self.dialog.result()
         self.assertEqual(result, QDialog.Rejected)
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(AttributeEditorDialogTest)

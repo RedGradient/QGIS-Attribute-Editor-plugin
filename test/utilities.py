@@ -22,13 +22,13 @@ def get_qgis_app():
     If QGIS is already running the handle to that app will be returned.
     """
 
-    try:
-        from qgis.PyQt import QtGui, QtCore
-        from qgis.core import QgsApplication
-        from qgis.gui import QgsMapCanvas
-        from .qgis_interface import QgisInterface
-    except ImportError:
-        return None, None, None, None
+    # try:
+    from qgis.PyQt import QtGui, QtCore
+    from qgis.core import QgsApplication
+    from qgis.gui import QgsMapCanvas
+    from .qgis_interface import QgisInterface
+    # except ImportError:
+    #     return None, None, None, None
 
     global QGIS_APP  # pylint: disable=W0603
 

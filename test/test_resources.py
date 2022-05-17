@@ -18,7 +18,7 @@ from qgis.PyQt.QtGui import QIcon
 
 
 
-class AttributeEditorDialogTest(unittest.TestCase):
+class AttributeEditorResourcesTest(unittest.TestCase):
     """Test rerources work."""
 
     def setUp(self):
@@ -34,6 +34,7 @@ class AttributeEditorDialogTest(unittest.TestCase):
         path = ':/plugins/AttributeEditor/icon.png'
         icon = QIcon(path)
         self.assertFalse(icon.isNull())
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(AttributeEditorResourcesTest)
