@@ -2,7 +2,7 @@
 from typing import Callable, List, Dict
 
 from qgis.PyQt import QtCore
-from qgis.PyQt.QtCore import QPoint
+from qgis.PyQt.QtCore import Qt, QPoint
 from qgis.PyQt.QtGui import QIntValidator, QColor
 from qgis.PyQt.QtWidgets import QLineEdit, QComboBox, QListWidgetItem
 from qgis.core import *
@@ -85,10 +85,10 @@ class PointTool(QgsMapTool):
         #     self.parent.create_update_index_btn.setEnabled(False)
         #     return
 
-        print(f'Создание индекса для слоя {layer.name()}...')
+        print(f"Создание индекса для слоя {layer.name()}...")
         index = QgsSpatialIndex(layer.getFeatures())
         self.indexes[layer.id()] = index
-        print('Индекс создан!')
+        print("Индекс создан!")
 
     def on_update_index_btn(self):
         pass
@@ -272,9 +272,9 @@ class PointTool(QgsMapTool):
         for key in data:
             distinct_attrs = set(data[key])
             if len(distinct_attrs) > 1:
-                data[key] = "***"
-            elif list(distinct_attrs)[0] == "":
-                data[key] = "-"
+                data[key] = '***'
+            elif list(distinct_attrs)[0] == '':
+                data[key] = '-'
             else:
                 data[key] = str(list(distinct_attrs)[0])
 
@@ -305,7 +305,7 @@ class PointTool(QgsMapTool):
                 self.parent.table.addRow(i, label, input_widget)
                 self.parent.save_btn.setEnabled(True)
 
-            if hasattr(self.parent, "selected_object_count"):
+            if hasattr(self.parent, 'selected_object_count'):
                 self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
 
             return
@@ -326,7 +326,7 @@ class PointTool(QgsMapTool):
 
             field_data = meta.get(item[0])
             if field_data is not None:
-                field_type = field_data["type"]
+                field_type = field_data['type']
             else:
                 self.no_field_list.append(item[0])
                 continue
@@ -517,53 +517,71 @@ class PointTool(QgsMapTool):
 
     def on_save_btn_clicked(self) -> None:
         """Saves changed attributes"""
+
         if not self.input_widget_list:
             return
 
+        # получаем значения из виджетов
         current_attr_values = []
-        # print('Длина self.input_widget_list при сохранении --', len(self.input_widget_list))
-        for i, widget in enumerate(self.input_widget_list):
-
+        for widget in self.input_widget_list:
             if isinstance(widget, QLineEdit):
                 current_attr_values.append(widget.text())
             elif isinstance(widget, QComboBox):
                 current_attr_values.append(widget.currentText())
             else:
-                raise Exception("Input widget has unknown type")
+                raise Exception(
+                    "Тип виджета не соответствует ни одному из:"
+                    "QLineEdit, QComboBox"
+                )
 
-        new_attr_values = self.get_changed_attrs(self.old_attr_values, current_attr_values)
-        print(new_attr_values)
+        # получаем новые значения атрибутов
+        new_attr_values = self.get_changed_attrs(self.old_attr_values,
+                                                 current_attr_values)
 
-        # layer = self.iface.activeLayer()
+        """слой, которому принадлежат изменяемые атрибуты;
+        это не обязательно должен быть текущий слой"""
         layer = self.input_widget_list[0].layer
 
+        # current_attr_values = dict(zip(
+        #     [i for i in range(len(current_attr_values))], current_attr_values
+        # ))
+        # edit_mode_was_active = layer.isEditable()
+        # if not edit_mode_was_active:
+        #     layer.startEditing()
+        #
+        # for feature in layer.selectedFeatures():
+        #     layer.changeAttributeValues(feature.id(), new_attr_values)
+        # if self.mode == 'switch':
+        #     index = self.mult_press_data['current_index']
+        #     self.mult_press_data['pressed_list'].remove(self.mult_press_data['pressed_list'][index])
+        #     self.mult_press_data['pressed_list'].insert(index, layer.selectedFeatures()[0])
+        #
+        # if not edit_mode_was_active:
+        #     layer.commitChanges()
+
         # ---
-        current_attr_values = dict(zip([i for i in range(len(current_attr_values))], current_attr_values))
+        self.save(layer, new_attr_values)
         # ---
-
-        edit_mode_was_active = layer.isEditable()
-        if not edit_mode_was_active:
-            layer.startEditing()
-
-        # print(current_attr_values)
-
-        for feature in layer.selectedFeatures():
-            layer.changeAttributeValues(feature.id(), new_attr_values)
-            if self.mode == 'switch':
-                index = self.mult_press_data['current_index']
-                self.mult_press_data['pressed_list'].remove(self.mult_press_data['pressed_list'][index])
-                self.mult_press_data['pressed_list'].insert(index, layer.selectedFeatures()[0])
-
-        if not edit_mode_was_active:
-            layer.commitChanges()
-
-        # self.old_attr_values = current_attr_values
 
         self.parent.save_btn.setEnabled(False)
-        # self.parent.resetChangesBtn.setEnabled(False)
 
-    def save(self, attributes):
-        pass
+    @staticmethod
+    def save(layer, attributes: dict):
+        """Принимает слой и новые значения атрибутов и сохраняет их в слой"""
+
+        # запоминаем, был ли режим редактирования включён
+        edit_mode_was_active = layer.isEditable()
+
+        layer.startEditing()
+
+        for feature in layer.selectedFeatures():
+            layer.changeAttributeValues(feature.id(), attributes)
+
+        """это условие нужно для того,
+        чтобы оставить режим редактирования включённым,
+        если он был включён до сохранения"""
+        if not edit_mode_was_active:
+            layer.commitChanges()
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
         def closure(index: int) -> None:

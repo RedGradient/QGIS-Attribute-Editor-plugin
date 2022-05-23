@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os.path
 
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QWidget
