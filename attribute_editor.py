@@ -12,9 +12,6 @@ from .req_provider import RequirementsProvider
 from .attribute_editor_dialog import *
 
 
-DELETEME = "deleteme"
-
-
 class AttributeEditor:
     """QGIS Plugin Implementation."""
 
@@ -34,7 +31,7 @@ class AttributeEditor:
         self.plugin_dir = os.path.dirname(__file__)
 
         self.actions = []
-        self.menu = "Редактор атрибутов"
+        self.menu = 'Редактор атрибутов'
 
         # инструмент: флаг первого запуска
         self.mult_editor_first_start = True
@@ -44,7 +41,7 @@ class AttributeEditor:
         self.iface.mapCanvas().mapToolSet.connect(self.on_mapToolSet)
 
         # справочник
-        self.classifier = RequirementsProvider("/RS/RS.mixml")
+        self.classifier = RequirementsProvider('/RS/RS.mixml')
 
         # окна
         self.normal_dlg = None
@@ -145,14 +142,14 @@ class AttributeEditor:
 
         self.add_action(
             normal_mode_icon,
-            text="Одиночное и множественное редактирование",
+            text='Одиночное и множественное редактирование',
             callback=self.run_normal_mode,
             parent=self.iface.mainWindow()
         )
 
         self.add_action(
             switch_mode_icon,
-            text="Перечисление наложенных объектов",
+            text='Перечисление наложенных объектов',
             callback=self.run_switch_mode,
             parent=self.iface.mainWindow()
         )
@@ -166,7 +163,7 @@ class AttributeEditor:
         for action in self.actions:
             self.iface.removePluginMenu(
                 # self.tr(u'&Редактор атрибутов'),
-                "Редактор атрибутов",
+                'Редактор атрибутов',
                 action)
             self.iface.removeToolBarIcon(action)
 
@@ -188,7 +185,7 @@ class AttributeEditor:
             # self.switch_dlg.rejected.connect(self.on_switch_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             self.switch_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
-            self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode="switch")
+            self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode='switch')
 
         if not self.actions[1].isChecked():
             self.canvas.setMapTool(QgsMapToolPan(self.canvas))
@@ -198,7 +195,7 @@ class AttributeEditor:
         self.actions[0].setChecked(False)
 
         # prelude
-        # self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode="switch")
+        # self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode='switch')
         self.canvas.setMapTool(self.switch_map_tool)
 
     def run_normal_mode(self):
@@ -224,7 +221,7 @@ class AttributeEditor:
             # self.normal_dlg.rejected.connect(self.on_normal_dlg_rejected)
             # установка "always on top" (не работает в Linux)
             # self.normal_dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
-            self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode="normal")
+            self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode='normal')
 
         # on de-check: close window & unset tool
         if not self.actions[0].isChecked():
@@ -234,7 +231,7 @@ class AttributeEditor:
             return
         self.actions[1].setChecked(False)
 
-        # self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode="normal")
+        # self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode='normal')
         self.canvas.setMapTool(self.normal_map_tool)
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())

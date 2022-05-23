@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-import pprint
-from typing import *
+from typing import Callable, List, Dict
 
-from qgis.PyQt.QtWidgets import QLineEdit, QPushButton, QComboBox
-from qgis.PyQt.QtGui import QIntValidator
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QPoint
+from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt.QtWidgets import QLineEdit, QComboBox
 from qgis.core import *
 from qgis.gui import QgsMapTool
 
-from .attribute_editor_dialog import *
+from .attribute_editor_dialog import (FeatureSelectDialog,
+                                      CustomLineEdit,
+                                      CustomComboBox,
+                                      CustomTableItem)
 
 
 # TODO: исправить формат даты:
@@ -20,7 +22,7 @@ from .attribute_editor_dialog import *
 
 # TODO: реализовать выделение перетягиванием
 
-# TODO: выделять объект подсветкой границ
+# TODO: выделять объект подсветкой границ; это может привести к
 
 # TODO: статус бар
 
@@ -51,20 +53,22 @@ class PointTool(QgsMapTool):
 
         # (только для 'switch' режима)
         # храним список объектов, по которым будем переключаться
-        self.mult_press_data = {"pressed_list": [], "current_index": 0}
+        self.mult_press_data = {'pressed_list': [], 'current_index': 0}
 
         # задаем обратные вызовы при первом старте
         if self.first_start:
             self.parent.save_btn.clicked.connect(self.on_save_btn_clicked)
             # self.parent.resetChangesBtn.clicked.connect(self.on_resetChangesBtn_clicked)
-            if self.mode == "normal":
-                self.parent.update_btn.clicked.connect(self.on_update_btn_clicked)
-            elif self.mode == "switch":
+            if self.mode == 'normal':
+                self.parent.update_btn.clicked.connect(
+                    self.on_update_btn_clicked
+                )
+            elif self.mode == 'switch':
                 # обратные вызовы для кнопок вправо-влево
                 self.parent.gotoRight.clicked.connect(self.on_gotoRight_click)
                 self.parent.gotoLeft.clicked.connect(self.on_gotoLeft_click)
             else:
-                raise Exception(f'Неизвестный режим инструмента: {self.mode}')
+                raise Exception(f"Неизвестный режим инструмента: {self.mode}")
 
             self.first_start = False
 
@@ -110,12 +114,12 @@ class PointTool(QgsMapTool):
             if hasattr(self.parent, "selected_object_count"):
                 self.parent.selected_object_count.setText("Выбрано объектов: 0")
             return
-        if self.mode == "switch":
+        if self.mode == 'switch':
             layer.removeSelection()
 
         # show dialog with choice of features if there are more than one feature on press point
         if len(pressed_features) > 1:
-            self.mult_press_data.update({"pressed_list": pressed_features, "current_index": 0})
+            self.mult_press_data.update({'pressed_list': pressed_features, 'current_index': 0})
             # show dialog with layer selector
             self.feat_select_dlg = FeatureSelectDialog()
 
@@ -156,7 +160,7 @@ class PointTool(QgsMapTool):
             return
 
         if len(pressed_features) < 2:
-            if self.mode == "switch":
+            if self.mode == 'switch':
                 return
 
         # select pressed features on the layer
@@ -169,16 +173,18 @@ class PointTool(QgsMapTool):
             self.parent.show()
 
     def on_select_feat_btn_clicked(self) -> Callable:
-        """It is callback for feature button in feature choice dialog. It gets feature and show it"""
+        """It is callback for feature button in feature choice dialog. It gets feature and show it
+        Возвращает обратный вызов для кнопки, нажатой в диалоге выбора объекта.
+        Сам обратный вызов возвращает нажатый объект типа QgsFeature"""
 
         def closure(item):
-            feature = item.data(QtCore.Qt.UserRole)  # извлечь feature из item
+            feature = item.data(QtCore.Qt.UserRole)
             self.display_attrs([feature])
             self.iface.activeLayer().select(feature.id())
             self.feat_select_dlg.reject()
             if not self.parent.isVisible():
-                if self.mode == "switch":
-                    list_length = len(self.mult_press_data["pressed_list"])
+                if self.mode == 'switch':
+                    list_length = len(self.mult_press_data['pressed_list'])
                     label_text = f"{1}/{list_length}"
                     self.parent.label.setText(label_text)
                 self.parent.show()
@@ -334,7 +340,7 @@ class PointTool(QgsMapTool):
                 self.no_field_list.append(item[0])
                 continue
 
-            if field_type in ["Char", "Int", "Decimal", "Date"]:
+            if field_type in ['Char', 'Int', 'Decimal', 'Date']:
                 input_widget = CustomLineEdit()
 
                 # если тип атрибута 'Int', устанавливаем Int валидатор
@@ -351,16 +357,16 @@ class PointTool(QgsMapTool):
                     input_widget.old_text = item[1]
                 input_widget.textChanged.connect(self.on_textChanged(input_widget))
 
-            elif field_type == "Dir":
+            elif field_type == 'Dir':
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
                 attribute = item[0]
 
-                variants = [""]
-                input_widget.addItems([""])
-                for code in meta[attribute]["choice_fullcode"]:
-                    rv = readable_values[code]["code"]
+                variants = ['']
+                input_widget.addItems([''])
+                for code in meta[attribute]['choice_fullcode']:
+                    rv = readable_values[code]['code']
                     input_widget.addItem(rv)
                     variants.append(rv)
 
@@ -388,16 +394,16 @@ class PointTool(QgsMapTool):
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
-            elif field_type == "DirValue":
+            elif field_type == 'DirValue':
                 input_widget = CustomComboBox()
                 input_widget.setEditable(True)
 
-                attribute = meta[item[0]]["fieldRef"]
+                attribute = meta[item[0]]['fieldRef']
 
-                variants = [""]
-                input_widget.addItem("")
-                for code in meta[attribute]["choice_fullcode"]:
-                    rv = readable_values[code]["text"]
+                variants = ['']
+                input_widget.addItem('')
+                for code in meta[attribute]['choice_fullcode']:
+                    rv = readable_values[code]['text']
                     input_widget.addItem(rv)
                     variants.append(rv)
 
@@ -443,24 +449,25 @@ class PointTool(QgsMapTool):
 
             self.parent.table.addRow(i, label, input_widget)
 
-        if hasattr(self.parent, "selected_object_count"):
+        if hasattr(self.parent, 'selected_object_count'):
             self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
         self.parent.save_btn.setEnabled(False)
         if self.no_field_list:
             widget = self.iface.messageBar().createMessage(
-                "Следующие атрибуты не показаны, т.к. отсутствуют в системе требований",
+                "Следующие атрибуты не показаны,"
+                "т.к. отсутствуют в системе требований",
                 str(tuple(self.no_field_list))
             )
             self.iface.messageBar().pushWidget(widget, Qgis.Warning)
 
     def on_gotoRight_click(self):
-        index = self.mult_press_data["current_index"] + 1
-        pressed_list = self.mult_press_data["pressed_list"]
+        index = self.mult_press_data['current_index'] + 1
+        pressed_list = self.mult_press_data['pressed_list']
         if index > len(pressed_list) - 1:
             return
         self.parent.label.setText(f"{index + 1}/{len(pressed_list)}")
         feature = pressed_list[index]
-        self.mult_press_data["current_index"] += 1
+        self.mult_press_data['current_index'] += 1
 
         # select feature
         self.iface.activeLayer().removeSelection()
@@ -470,13 +477,13 @@ class PointTool(QgsMapTool):
         self.display_attrs([feature])
 
     def on_gotoLeft_click(self):
-        index = self.mult_press_data["current_index"] - 1
+        index = self.mult_press_data['current_index'] - 1
         if index < 0:
             return
-        list_length = len(self.mult_press_data["pressed_list"])
+        list_length = len(self.mult_press_data['pressed_list'])
         self.parent.label.setText(f"{index + 1}/{list_length}")
-        feature = self.mult_press_data["pressed_list"][index]
-        self.mult_press_data["current_index"] -= 1
+        feature = self.mult_press_data['pressed_list'][index]
+        self.mult_press_data['current_index'] -= 1
 
         # select feature
         self.iface.activeLayer().removeSelection()
@@ -546,10 +553,10 @@ class PointTool(QgsMapTool):
 
         for feature in layer.selectedFeatures():
             layer.changeAttributeValues(feature.id(), new_attr_values)
-            if self.mode == "switch":
-                index = self.mult_press_data["current_index"]
-                self.mult_press_data["pressed_list"].remove(self.mult_press_data["pressed_list"][index])
-                self.mult_press_data["pressed_list"].insert(index, layer.selectedFeatures()[0])
+            if self.mode == 'switch':
+                index = self.mult_press_data['current_index']
+                self.mult_press_data['pressed_list'].remove(self.mult_press_data['pressed_list'][index])
+                self.mult_press_data['pressed_list'].insert(index, layer.selectedFeatures()[0])
 
         if not edit_mode_was_active:
             layer.commitChanges()
@@ -558,6 +565,9 @@ class PointTool(QgsMapTool):
 
         self.parent.save_btn.setEnabled(False)
         # self.parent.resetChangesBtn.setEnabled(False)
+
+    def save(self, attributes):
+        pass
 
     def on_currentIndexChanged(self, combo_box: QComboBox, other_combo_box: QComboBox) -> Callable:
         def closure(index: int) -> None:

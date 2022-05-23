@@ -93,20 +93,14 @@ class CustomLineEdit(QtWidgets.QLineEdit):
         """Constructor"""
         super(CustomLineEdit, self).__init__(parent)
         self.setTextMargins(2, 0, 2, 0)
-        self.setStyleSheet("border: 0px")
+        self.setStyleSheet('border: 0px')
         # self.setMinimumWidth(100)
 
     def setWarnStyle(self) -> None:
-        self.setStyleSheet("background-color: #ffcc00")
+        self.setStyleSheet('background-color: #ffcc00')
 
     def setNormalStyle(self) -> None:
         self.setStyleSheet("")
-
-    # def decideWhatToDisplay(self, value):
-    #     if value in ['-', '***']:
-    #         self.lineEdit().setPlaceholderText(str(value))
-    #     else:
-    #         self.lineEdit().setText(str(value))
 
 
 class CustomComboBox(QtWidgets.QComboBox):
@@ -117,13 +111,7 @@ class CustomComboBox(QtWidgets.QComboBox):
         self.setLineEdit(lineEdit)
         self.setEditable(True)
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLength)
-        self.setStyleSheet("QComboBox { border: 0px }")
-
-    # def setDangerStyle(self) -> None:
-    #     self.setStyleSheet("color: white; background-color: #ffcc00")
-    #
-    # def setNormalStyle(self) -> None:
-    #     self.setStyleSheet("")
+        self.setStyleSheet('QComboBox { border: 0px }')
 
 
 class CustomTableWidget(QtWidgets.QTableWidget):
@@ -132,18 +120,17 @@ class CustomTableWidget(QtWidgets.QTableWidget):
 
         self.setFocusPolicy(Qt.NoFocus)
 
-        # цвета зебры и индекс последнего цвета
+        # цвета зебры и индекс последнего использованного цвета
         self._colors = ('#ffffff', '#f7f7f7')
         self._color_index = 1
 
         self._combo_counter = 0
 
-        # флаг
         self.next_has_same_color = False
 
         self.setColumnCount(2)
         self.horizontalHeader().setStretchLastSection(True)
-        self.setHorizontalHeaderLabels(["Атрибут", "Значение"])
+        self.setHorizontalHeaderLabels(['Атрибут', 'Значение'])
         self.verticalHeader().setVisible(False)
 
     def addRow(self, row_index, label, input_widget):
@@ -195,8 +182,6 @@ class CustomTableItem(QtWidgets.QTableWidgetItem):
         #     self.setStyleSheet("padding-left: 10px; font-weight: bold;")
         # else:
         #     self.setStyleSheet("padding-left: 10px; font-weight: normal;")
-
-
 
 
 class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):
