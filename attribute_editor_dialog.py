@@ -91,7 +91,6 @@ class CustomLineEdit(QtWidgets.QLineEdit):
         super(CustomLineEdit, self).__init__(parent)
         self.setTextMargins(2, 0, 2, 0)
         self.setStyleSheet('border: 0px')
-        # self.setMinimumWidth(100)
 
     def setWarnStyle(self) -> None:
         self.setStyleSheet('background-color: #ffcc00')
@@ -167,26 +166,13 @@ class CustomTableWidget(QtWidgets.QTableWidget):
 class CustomTableItem(QtWidgets.QTableWidgetItem):
     def __init__(self, parent=None) -> None:
         super(CustomTableItem, self).__init__(parent)
-        # self.setStyleSheet("padding-left: 10px")
 
     def setChanged(self, changed) -> None:
         font = QFont()
         font.setBold(True) if changed else font.setBold(False)
         self.setFont(font)
 
-        # if changed:
-        #     self.setStyleSheet("padding-left: 10px; font-weight: bold;")
-        # else:
-        #     self.setStyleSheet("padding-left: 10px; font-weight: normal;")
-
 
 class CustomTableWidgetItem(QtWidgets.QTableWidgetItem):
     def __init__(self, parent=None) -> None:
         super(CustomTableWidgetItem, self).__init__(parent)
-
-    def setChanged(self, changed) -> None:
-        # if changed:
-        #     self.setStyleSheet("padding-left: 10px; font-weight: bold;")
-        # else:
-        #     self.setStyleSheet("padding-left: 10px; font-weight: normal;")
-        pass
