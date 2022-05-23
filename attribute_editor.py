@@ -9,7 +9,7 @@ from qgis.gui import QgsMapToolPan
 from .resources import *
 from .pointtool import PointTool
 from .req_provider import RequirementsProvider
-from .attribute_editor_dialog import *
+from .attribute_editor_dialog import AttributeEditorDialog, AttributeEditorSwitchDialog
 
 
 class AttributeEditor:
@@ -33,11 +33,11 @@ class AttributeEditor:
         self.actions = []
         self.menu = 'Редактор атрибутов'
 
-        # инструмент: флаг первого запуска
+        # флаг первого запуска
         self.mult_editor_first_start = True
         self.switch_editor_first_start = True
 
-        # событие: снимаем нажатие с инструмента PointTool, если был выбран другой инструмент
+        # снимаем нажатие с инструмента, если был выбран другой инструмент
         self.iface.mapCanvas().mapToolSet.connect(self.on_mapToolSet)
 
         # справочник
@@ -52,7 +52,7 @@ class AttributeEditor:
         self.normal_pressed = False
 
     def on_mapToolSet(self, new, old):
-        """Снимает нажатие с инструмента PointTool, если был выбран другой инструмент"""
+        """Снимает нажатие с инструмента, если был выбран другой инструмент"""
         if isinstance(old, PointTool) and not isinstance(new, PointTool):
             for action in self.actions:
                 action.setChecked(False)
@@ -135,8 +135,6 @@ class AttributeEditor:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        # icon_path = ':/plugins/attribute_editor/new_icon.png'
-
         normal_mode_icon = ':/plugins/attribute_editor/icons/normal_mode_icon.png'
         switch_mode_icon = ':/plugins/attribute_editor/icons/switch_mode_icon.png'
 
@@ -195,25 +193,22 @@ class AttributeEditor:
         self.actions[0].setChecked(False)
 
         # prelude
-        # self.switch_map_tool = PointTool(self.switch_dlg, self.iface, self.canvas, self.classifier, mode='switch')
         self.canvas.setMapTool(self.switch_map_tool)
 
     def run_normal_mode(self):
         """Run method that performs all the real work"""
         layer = self.iface.activeLayer()
         if layer is None:
-            # self.normal_pressed = False
             self.actions[0].setChecked(False)
             return
 
-        # if layer has no geometry
-        # QgsWkbTypes.Unknown
+        # если слой не имеет геометрии
         if layer.wkbType() == 100:
             print("Активный слой не имеет геометрии")
             self.actions[0].setChecked(False)
             return
 
-        # Create the dialog with elements (after translation) and keep reference
+        # Create the dialog with elements and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.mult_editor_first_start:
             self.mult_editor_first_start = False
@@ -231,7 +226,6 @@ class AttributeEditor:
             return
         self.actions[1].setChecked(False)
 
-        # self.normal_map_tool = PointTool(self.normal_dlg, self.iface, self.canvas, self.classifier, mode='normal')
         self.canvas.setMapTool(self.normal_map_tool)
 
         selected_features = list(self.iface.activeLayer().getSelectedFeatures())
@@ -250,12 +244,6 @@ class AttributeEditor:
 
         # Run the dialog event loop
         result = self.normal_dlg.exec_()
-
-        # if result == 0:
-        #     self.actions[0].setChecked(False)
-        # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
-        # return
-        # self.canvas.setMapTool(QgsMapToolPan(self.canvas))
 
     def on_switch_dlg_rejected(self):
         self.canvas.setMapTool(QgsMapToolPan(self.canvas))

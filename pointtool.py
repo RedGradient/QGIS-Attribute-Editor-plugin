@@ -24,8 +24,6 @@ from .attribute_editor_dialog import (FeatureSelectDialog,
 
 # TODO: выделять объект подсветкой границ; это может привести к
 
-# TODO: статус бар
-
 # TODO: появление редактора после создания объекта
 
 
@@ -95,7 +93,9 @@ class PointTool(QgsMapTool):
         # переводим из пиксельных координат в координаты карты
         canvas = self.iface.mapCanvas()
         for vert in buffer.vertices():
-            point = QgsMapTool(canvas).toLayerCoordinates(layer, QPoint(vert.x(), vert.y()))
+            point = QgsMapTool(canvas).toLayerCoordinates(
+                layer, QPoint(vert.x(), vert.y())
+            )
             vertices.append(point)
 
         area = QgsGeometry.fromPolygonXY([vertices])
@@ -286,11 +286,6 @@ class PointTool(QgsMapTool):
         if self.classifier.get_layer_ref(layer_name) is None:
 
             self.parent.table.setRowCount(len(data))
-
-            # сообщение
-            widget = self.iface.messageBar().createMessage("", "Слой не найден в системе требований. Ошибки не "
-                                                               "подсвечиваются, подсказок нет")
-            self.iface.messageBar().pushWidget(widget, Qgis.Info)
 
             self.combo_box_list = []
             self.input_widget_list = []

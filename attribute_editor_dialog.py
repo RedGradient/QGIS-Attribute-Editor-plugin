@@ -9,7 +9,6 @@ from qgis.PyQt.QtGui import QColor, QFont, QIcon
 
 class AttributeEditorBaseDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
-        """Constructor."""
         super(AttributeEditorBaseDialog, self).__init__(parent)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         self.setGeometry(0, 0, 500, 600)
@@ -17,7 +16,7 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
 
         self.table = CustomTableWidget()
 
-        self.save_btn = QtWidgets.QPushButton(" Сохранить")
+        self.save_btn = QtWidgets.QPushButton(' Сохранить')
         self.save_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/save-icon.svg'))
 
         self.save_btn.setStyleSheet('padding: 5px')
