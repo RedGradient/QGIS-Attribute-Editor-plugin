@@ -30,10 +30,9 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
 
 class AttributeEditorDialog(AttributeEditorBaseDialog):
     def __init__(self, parent=None):
-        """Constructor."""
         super(AttributeEditorDialog, self).__init__(parent)
-        self.selected_object_count = QtWidgets.QLabel("")
-        self.update_btn = QtWidgets.QPushButton(" Обновить")
+        self.selected_object_count = QtWidgets.QLabel('')
+        self.update_btn = QtWidgets.QPushButton(' Обновить')
         self.update_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/refresh.svg'))
         self.update_btn.setStyleSheet('padding: 5px; padding-left: 15px; padding-right: 15px')
         self.hspacer = QtWidgets.QSpacerItem(
@@ -76,7 +75,6 @@ FEATURE_SELECT_FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
     def __init__(self, parent=None) -> None:
-        """Constructor."""
         super(FeatureSelectDialog, self).__init__(parent)
 
         self.vbox = QtWidgets.QVBoxLayout()
@@ -90,7 +88,6 @@ class FeatureSelectDialog(QtWidgets.QDialog, FEATURE_SELECT_FORM_CLASS):
 
 class CustomLineEdit(QtWidgets.QLineEdit):
     def __init__(self, parent=None) -> None:
-        """Constructor"""
         super(CustomLineEdit, self).__init__(parent)
         self.setTextMargins(2, 0, 2, 0)
         self.setStyleSheet('border: 0px')
@@ -105,7 +102,6 @@ class CustomLineEdit(QtWidgets.QLineEdit):
 
 class CustomComboBox(QtWidgets.QComboBox):
     def __init__(self, parent=None) -> None:
-        """Constructor"""
         super(CustomComboBox, self).__init__(parent)
         lineEdit = CustomLineEdit()
         self.setLineEdit(lineEdit)
