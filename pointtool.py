@@ -4,7 +4,7 @@ from typing import Callable, List, Dict
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QPoint
 from qgis.PyQt.QtGui import QIntValidator
-from qgis.PyQt.QtWidgets import QLineEdit, QComboBox
+from qgis.PyQt.QtWidgets import QLineEdit, QComboBox, QListWidgetItem
 from qgis.core import *
 from qgis.gui import QgsMapTool
 
@@ -129,7 +129,7 @@ class PointTool(QgsMapTool):
 
             for feature in pressed_features:
                 # элемент списка
-                item = QtWidgets.QListWidgetItem()
+                item = QListWidgetItem()
 
                 # задаем текст и данные
                 if len(feature.attributes()) > 0:
