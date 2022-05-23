@@ -49,6 +49,8 @@ class PointTool(QgsMapTool):
 
         self.no_field_list = []
 
+        self.indexes = {}
+
         # (только для 'switch' режима)
         # храним список объектов, по которым будем переключаться
         self.mult_press_data = {'pressed_list': [], 'current_index': 0}
@@ -68,15 +70,35 @@ class PointTool(QgsMapTool):
             else:
                 raise Exception(f"Неизвестный режим инструмента: {self.mode}")
 
+            # создание и обновление индекса
+            self.parent.create_update_index_btn.clicked.connect(self.on_create_update_index_btn)
+
             self.first_start = False
 
         QgsMapTool.__init__(self, canvas)
+
+    def on_create_update_index_btn(self):
+        """Обрабатывает нажатие на кнопку 'Создать/Обновить индекс'"""
+        layer = self.iface.activeLayer()
+
+        # if self.indexes.get(layer.id()) is not None:
+        #     self.parent.create_update_index_btn.setEnabled(False)
+        #     return
+
+        print(f'Создание индекса для слоя {layer.name()}...')
+        index = QgsSpatialIndex(layer.getFeatures())
+        self.indexes[layer.id()] = index
+        print('Индекс создан!')
+
+    def on_update_index_btn(self):
+        pass
 
     def on_update_btn_clicked(self):
         layer = self.iface.activeLayer()
         self.display_attrs(layer.selectedFeatures())
 
     def canvasReleaseEvent(self, event):
+        """Обрабатывает нажатие на карту"""
         layer = self.iface.activeLayer()
 
         # выбираем радиус окружности буфера
@@ -93,8 +115,10 @@ class PointTool(QgsMapTool):
         # переводим из пиксельных координат в координаты карты
         canvas = self.iface.mapCanvas()
         for vert in buffer.vertices():
+            # переводим из пиксельных координат в координаты слоя
             point = QgsMapTool(canvas).toLayerCoordinates(
-                layer, QPoint(vert.x(), vert.y())
+                layer,
+                QPoint(int(vert.x()), int(vert.y()))
             )
             vertices.append(point)
 
@@ -173,8 +197,7 @@ class PointTool(QgsMapTool):
             self.parent.show()
 
     def on_select_feat_btn_clicked(self) -> Callable:
-        """It is callback for feature button in feature choice dialog. It gets feature and show it
-        Возвращает обратный вызов для кнопки, нажатой в диалоге выбора объекта.
+        """Возвращает обратный вызов для кнопки, нажатой в диалоге выбора объекта.
         Сам обратный вызов возвращает нажатый объект типа QgsFeature"""
 
         def closure(item):
@@ -194,51 +217,24 @@ class PointTool(QgsMapTool):
     def get_features_in_geometry(self, geometry) -> list:
         """Returns features in geometry"""
 
-        # source_crs = layer.sourceCrs()
-        # dest_crs = QgsProject.instance().crs()
-        # правило преобразования
-        # как в source_crs указать систему координат холста?
-        # tr = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
-        # geometry.transform(tr)
-
         # активный слой
         layer = self.iface.activeLayer()
-        # найденные объекты
+
+        # если для этого слоя есть индекс и разрешено использование индекса
+        if (self.indexes.get(layer.id()) is not None and
+                self.parent.use_index_chb.isChecked()):
+            index = self.indexes[layer.id()]
+            candidates = index.intersects(geometry.boundingBox())
+            req = QgsFeatureRequest().setFilterFids(candidates)
+        else:
+            req = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
+
         result = []
-
-        f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-        features = layer.getFeatures(f)
-
-        for i in features:
-            result.append(i)
+        for feature in layer.getFeatures(req):
+            if feature.geometry().intersects(geometry):
+                result.append(feature)
 
         return result
-
-        # iterate over features in the layer to find features that intersect the point
-        # if geometry.wkbType() == QgsWkbTypes().Polygon:
-        # print('polygon')
-        # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-        # else:
-        #     print('point')
-            # f = QgsFeatureRequest().setFilterRect(geometry.boundingBox())
-            # for feature in layer.getFeatures():
-
-            # print('boundingBox:', geometry.boundingBox())
-
-        # layer_features = layer.getFeatures(f)
-        # pprint.pprint(list(map(lambda x: x['full_name'], list(layer_features))))
-
-        # for feature in layer_features:
-        #     feature_geometry = feature.geometry()
-        #     # feature_geometry.transform(transform)
-        #     if geometry.intersects(feature_geometry):
-        #         # print(feature_geometry)
-        #         result.append(feature)
-
-        # for i in layer_features:
-        #     result.append(i)
-        # print('result len', len(result))
-        # return result
 
     def clear_layout(self, layout) -> None:
         """Gets layout and clears it"""

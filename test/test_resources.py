@@ -17,8 +17,7 @@ import unittest
 from qgis.PyQt.QtGui import QIcon
 
 
-
-class AttributeEditorResourcesTest(unittest.TestCase):
+class AttributeEditorDialogTest(unittest.TestCase):
     """Test rerources work."""
 
     def setUp(self):
@@ -37,9 +36,6 @@ class AttributeEditorResourcesTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    suite = unittest.makeSuite(AttributeEditorResourcesTest)
+    suite = unittest.makeSuite(AttributeEditorDialogTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
-
-
-
