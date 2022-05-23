@@ -3,7 +3,7 @@ from typing import Callable, List, Dict
 
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QPoint
-from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt.QtGui import QIntValidator, QColor
 from qgis.PyQt.QtWidgets import QLineEdit, QComboBox, QListWidgetItem
 from qgis.core import *
 from qgis.gui import QgsMapTool
@@ -135,8 +135,8 @@ class PointTool(QgsMapTool):
         if len(pressed_features) == 0:
             self.parent.table.setRowCount(0)
             self.input_widget_list = []
-            if hasattr(self.parent, "selected_object_count"):
-                self.parent.selected_object_count.setText("Выбрано объектов: 0")
+            if hasattr(self.parent, 'selected_object_count'):
+                self.parent.selected_object_count.setText('Выбрано объектов: 0')
             return
         if self.mode == 'switch':
             layer.removeSelection()
@@ -420,14 +420,17 @@ class PointTool(QgsMapTool):
                 #     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 # )
                 input_widget.currentTextChanged.connect(
-                    self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(),
+                                                      variants)
                 )
 
                 self.combo_box_list[-1].currentIndexChanged.connect(
-                    self.on_currentIndexChanged(self.combo_box_list[-1], input_widget)
+                    self.on_currentIndexChanged(self.combo_box_list[-1],
+                                                input_widget)
                 )
                 input_widget.currentIndexChanged.connect(
-                    self.on_currentIndexChanged(input_widget, self.combo_box_list[-1])
+                    self.on_currentIndexChanged(input_widget,
+                                                self.combo_box_list[-1])
                 )
 
             else:
@@ -441,7 +444,9 @@ class PointTool(QgsMapTool):
             self.parent.table.addRow(i, label, input_widget)
 
         if hasattr(self.parent, 'selected_object_count'):
-            self.parent.selected_object_count.setText(f"Выбрано объектов: {len(features)}")
+            self.parent.selected_object_count.setText(
+                f"Выбрано объектов: {len(features)}"
+            )
         self.parent.save_btn.setEnabled(False)
         if self.no_field_list:
             widget = self.iface.messageBar().createMessage(
