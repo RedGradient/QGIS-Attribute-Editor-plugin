@@ -9,7 +9,7 @@ from qgis.gui import QgsMapToolPan
 
 from .resources import *
 from .pointtool import PointTool
-from .req_provider import RequirementsProvider
+from .provider import RequirementsProvider
 from .attribute_editor_dialog import (AttributeEditorDialog,
                                       AttributeEditorSwitchDialog)
 

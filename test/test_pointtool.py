@@ -11,7 +11,7 @@ from qgis.gui import QgisInterface
 
 from attribute_editor_dialog import AttributeEditorDialog
 from pointtool import PointTool
-from req_provider import RequirementsProvider
+from provider import RequirementsProvider
 
 
 class TestPointTool(unittest.TestCase):
