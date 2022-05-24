@@ -248,35 +248,33 @@ class PointTool(QgsMapTool):
                 else:
                     self.clear_layout(item.layout())
 
-    def display_attrs(self, features: List) -> None:
+    def display_attrs(self, features: list) -> None:
         """Takes feature list and display their attributes"""
+
+        # задаем заголовок диалога соответственно названию слоя
         layer_name = self.iface.activeLayer().name()
         self.parent.setWindowTitle(f"{layer_name} — Слой")
 
-        # dict with item format "атрибут -> [список значений данного атрибута из всех features]"
+        # создаем словарь {атрибут: [список значений данного атрибута из всех features]}
         data = {}
         for feature in features:
-            feature_attr_map = dict(zip(
-                list(map(lambda f: f.displayName(), feature.fields())),
-                feature.attributes()
-            ))
-            for item in list(feature_attr_map.items()):
-                if item[0] in data:
-                    data[item[0]].append(item[1])
-                else:
-                    data[item[0]] = [item[1]]
+            attr_map = feature.attributeMap()
+            for attr, value in attr_map.items():
+                data.setdefault(attr, []).append(value)
 
-        # атрибут одинаковый для всех features => значение показывается
-        # атрибуты разные для всех features => выводится '***'
-        # атрибут пустой => выводится '-'
+        """
+        атрибут одинаковый для всех выбранных features -> значение показывается;
+        атрибуты разные для всех выбранных features -> выводится "***";
+        атрибут пустой -> выводится "-"
+        """
         for key in data:
-            distinct_attrs = set(data[key])
-            if len(distinct_attrs) > 1:
+            unique_attrs = set(data[key])
+            if len(unique_attrs) > 1:
                 data[key] = '***'
-            elif list(distinct_attrs)[0] == '':
+            elif list(unique_attrs)[0] == '':
                 data[key] = '-'
             else:
-                data[key] = str(list(distinct_attrs)[0])
+                data[key] = str(list(unique_attrs)[0])
 
         # если слой отсутствует в системе требований
         if self.classifier.get_layer_ref(layer_name) is None:
@@ -286,17 +284,20 @@ class PointTool(QgsMapTool):
             self.combo_box_list = []
             self.input_widget_list = []
             for i, item in enumerate(data.items()):
-                label = CustomTableItem(item[0])
+                # распаковываем item для читаемости кода
+                attribute_name, display_value = item
+
+                label = CustomTableItem(attribute_name)
 
                 input_widget = CustomLineEdit()
                 if item[1] in ['-', '***']:
-                    input_widget.setPlaceholderText(str(item[1]))
+                    input_widget.setPlaceholderText(str(display_value))
                     self.old_attr_values.append('')
                     input_widget.old_text = ''
                 else:
-                    input_widget.setText(item[1])
-                    self.old_attr_values.append(str(item[1]))
-                    input_widget.old_text = item[1]
+                    input_widget.setText(display_value)
+                    self.old_attr_values.append(str(display_value))
+                    input_widget.old_text = display_value
 
                 input_widget.label = label
                 input_widget.layer = self.iface.activeLayer()
@@ -377,10 +378,7 @@ class PointTool(QgsMapTool):
                 input_widget.variants = variants
                 self.combo_box_list.append(input_widget)
                 self.show_invalid_inputs(input_widget.lineEdit(), variants)
-                # input_widget.lineEdit().textEdited.connect(self.on_textEdited(input_widget.lineEdit()))
-                # input_widget.lineEdit().textEdited.connect(
-                #     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
-                # )
+
                 input_widget.currentTextChanged.connect(
                     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
@@ -414,23 +412,16 @@ class PointTool(QgsMapTool):
                 input_widget.variants = variants
                 self.show_invalid_inputs(input_widget.lineEdit(), variants)
 
-                # set event handlers
-                # input_widget.lineEdit().textEdited.connect(self.on_textEdited(input_widget.lineEdit()))
-                # input_widget.lineEdit().textEdited.connect(
-                #     self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
-                # )
+                # задаем обработчики событий
                 input_widget.currentTextChanged.connect(
-                    self.show_invalid_inputs_callback(input_widget.lineEdit(),
-                                                      variants)
+                    self.show_invalid_inputs_callback(input_widget.lineEdit(), variants)
                 )
 
                 self.combo_box_list[-1].currentIndexChanged.connect(
-                    self.on_currentIndexChanged(self.combo_box_list[-1],
-                                                input_widget)
+                    self.on_currentIndexChanged(self.combo_box_list[-1], input_widget)
                 )
                 input_widget.currentIndexChanged.connect(
-                    self.on_currentIndexChanged(input_widget,
-                                                self.combo_box_list[-1])
+                    self.on_currentIndexChanged(input_widget, self.combo_box_list[-1])
                 )
 
             else:
