@@ -137,8 +137,8 @@ class AttributeEditor:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        normal_mode_icon = ':/plugins/attribute_editor/icons/normal_mode_icon.png'
-        switch_mode_icon = ':/plugins/attribute_editor/icons/switch_mode_icon.png'
+        normal_mode_icon = ':/plugins/attribute_editor/icons/normal-mode.png'
+        switch_mode_icon = ':/plugins/attribute_editor/icons/switch-mode.png'
 
         self.add_action(
             normal_mode_icon,

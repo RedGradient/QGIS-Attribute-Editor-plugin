@@ -19,15 +19,13 @@ about=Просмотр и редактирование атрибутов объ
 # Recommended items:
 
 hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
-# changelog=
 
 # Tags are comma separated with spaces allowed
 # tags=python
 
 # homepage=http://homepage
 category=Plugins
-icon=icons/normal_mode_icon.png
+icon=icons/icon.png
 # experimental flag
 experimental=True
 

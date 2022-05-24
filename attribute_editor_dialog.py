@@ -26,7 +26,7 @@ class AttributeEditorBaseDialog(QtWidgets.QDialog):
         self.table = CustomTableWidget()
 
         self.save_btn = QtWidgets.QPushButton(' Сохранить')
-        self.save_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/save-icon.svg'))
+        self.save_btn.setIcon(QIcon(':/plugins/attribute_editor/icons/save.svg'))
 
         self.save_btn.setStyleSheet('padding: 5px')
         self.save_btn.setEnabled(False)
