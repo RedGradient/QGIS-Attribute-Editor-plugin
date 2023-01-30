@@ -1,6 +1,6 @@
 import os.path
 import xml.etree.ElementTree as ET
-from typing import *
+from typing import Dict
 from xml.etree.ElementTree import Element
 
 
