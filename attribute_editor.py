@@ -7,7 +7,7 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtWidgets import QWidget
 from qgis.gui import QgsMapToolPan
 
-from .resources import *
+from .resources import *  # pylint: disable=wildcard-import
 from .pointtool import PointTool
 from .provider import RequirementsProvider
 from .attribute_editor_dialog import (AttributeEditorDialog,

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from typing import Callable, List, Dict
-
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import Qt, QPoint
 from qgis.PyQt.QtGui import QIntValidator, QColor
 from qgis.PyQt.QtWidgets import QLineEdit, QComboBox, QListWidgetItem
-from qgis.core import *
+from qgis.core import QgsSpatialIndex, QgsWkbTypes, QgsGeometry, QgsFeatureRequest, Qgis
 from qgis.gui import QgsMapTool
+from typing import Callable, List, Dict
 
 from .attribute_editor_dialog import (FeatureSelectDialog,
                                       CustomLineEdit,
